@@ -9,9 +9,11 @@ import org.jetbrains.kotlin.backend.common.CodegenUtil
 import org.jetbrains.kotlin.backend.common.CommonBackendContext
 import org.jetbrains.kotlin.backend.common.FileLoweringPass
 import org.jetbrains.kotlin.backend.common.lower
+import org.jetbrains.kotlin.config.CommonConfigurationKeys
 import org.jetbrains.kotlin.ir.IrElement
 import org.jetbrains.kotlin.ir.declarations.IrFile
 import org.jetbrains.kotlin.ir.declarations.IrModuleFragment
+import kotlin.concurrent.thread
 
 // Phase composition.
 private class CompositePhase<Context : CommonBackendContext, Input, Output>(
@@ -113,6 +115,16 @@ private class PerformByIrFilePhase<Context : CommonBackendContext>(
     private val lower: List<CompilerPhase<Context, IrFile, IrFile>>
 ) : SameTypeCompilerPhase<Context, IrModuleFragment> {
     override fun invoke(
+        phaseConfig: PhaseConfig,
+        phaserState: PhaserState<IrModuleFragment>,
+        context: Context,
+        input: IrModuleFragment
+    ): IrModuleFragment = if (context.configuration.getBoolean(CommonConfigurationKeys.RUN_LOWERINGS_IN_PARALLEL))
+        invokeParallel(phaseConfig, phaserState, context, input)
+    else
+        invokeSequential(phaseConfig, phaserState, context, input)
+
+    private fun invokeSequential(
         phaseConfig: PhaseConfig, phaserState: PhaserState<IrModuleFragment>, context: Context, input: IrModuleFragment
     ): IrModuleFragment {
         for (irFile in input.files) {
@@ -124,6 +136,27 @@ private class PerformByIrFilePhase<Context : CommonBackendContext>(
                 CodegenUtil.reportBackendException(e, "IR lowering", irFile.fileEntry.name)
             }
         }
+
+        // TODO: no guarantee that module identity is preserved by `lower`
+        return input
+    }
+
+    private fun invokeParallel(
+        phaseConfig: PhaseConfig, phaserState: PhaserState<IrModuleFragment>, context: Context, input: IrModuleFragment
+    ): IrModuleFragment {
+        val threads = input.files.map { irFile ->
+            thread {
+                try {
+                    for (phase in lower) {
+                        phase.invoke(phaseConfig, phaserState.changeType(), context, irFile)
+                    }
+                } catch (e: Throwable) {
+                    CodegenUtil.reportBackendException(e, "IR lowering", irFile.fileEntry.name)
+                }
+            }
+        }
+
+        threads.forEach { it.join() }
 
         // TODO: no guarantee that module identity is preserved by `lower`
         return input
