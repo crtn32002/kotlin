@@ -34,7 +34,6 @@ interface BackendContext {
     val sharedVariablesManager: SharedVariablesManager
     val internalPackageFqn: FqName
     val transformedFunction: MutableMap<IrFunctionSymbol, IrSimpleFunctionSymbol>
-    val lateinitNullableFields: MutableMap<IrField, IrField>
     val extractedLocalClasses: MutableSet<IrClass>
     val irFactory: IrFactory
 }

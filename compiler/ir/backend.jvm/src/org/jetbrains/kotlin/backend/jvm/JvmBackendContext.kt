@@ -65,7 +65,6 @@ class JvmBackendContext(
     override val irFactory: IrFactory = IrFactoryImpl
 
     override val scriptMode: Boolean = false
-    override val lateinitNullableFields = mutableMapOf<IrField, IrField>()
 
     override val builtIns = state.module.builtIns
     val typeMapper = IrTypeMapper(this)

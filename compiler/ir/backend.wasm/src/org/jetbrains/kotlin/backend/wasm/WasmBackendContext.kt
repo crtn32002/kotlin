@@ -22,7 +22,6 @@ import org.jetbrains.kotlin.ir.symbols.IrClassSymbol
 import org.jetbrains.kotlin.ir.symbols.IrFunctionSymbol
 import org.jetbrains.kotlin.ir.symbols.IrSimpleFunctionSymbol
 import org.jetbrains.kotlin.ir.symbols.impl.DescriptorlessExternalPackageFragmentSymbol
-import org.jetbrains.kotlin.ir.util.IdSignature
 import org.jetbrains.kotlin.ir.util.SymbolTable
 import org.jetbrains.kotlin.name.FqName
 
@@ -38,7 +37,6 @@ class WasmBackendContext(
     override var inVerbosePhase: Boolean = false
     override val scriptMode = false
     override val transformedFunction = mutableMapOf<IrFunctionSymbol, IrSimpleFunctionSymbol>()
-    override val lateinitNullableFields = mutableMapOf<IrField, IrField>()
     override val extractedLocalClasses: MutableSet<IrClass> = hashSetOf()
     override val irFactory: IrFactory = PersistentIrFactory
 
