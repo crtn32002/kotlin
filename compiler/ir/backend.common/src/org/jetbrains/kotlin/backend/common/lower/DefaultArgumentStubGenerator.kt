@@ -489,47 +489,49 @@ private fun IrFunction.generateDefaultsFunction(
 ): IrFunction? {
     if (skipInlineMethods && isInline) return null
     if (skipExternalMethods && isExternalOrInheritedFromExternal()) return null
-    if (context.mapping.defaultArgumentsOriginalFunction[this] != null) return null
-    context.mapping.defaultArgumentsDispatchFunction[this]?.let { return it }
-    if (this is IrSimpleFunction) {
-        // If this is an override of a function with default arguments, produce a fake override of a default stub.
-        if (overriddenSymbols.any { it.owner.findBaseFunctionWithDefaultArguments(skipInlineMethods, skipExternalMethods) != null })
-            return generateDefaultsFunctionImpl(
-                context, IrDeclarationOrigin.FAKE_OVERRIDE, visibility, true, useConstructorMarker
-            ).also { defaultsFunction ->
-                context.mapping.defaultArgumentsDispatchFunction[this] = defaultsFunction
-                context.mapping.defaultArgumentsOriginalFunction[defaultsFunction] = this
+    synchronized(context.mapping.defaultArgumentsDispatchFunction) {
+        if (context.mapping.defaultArgumentsOriginalFunction[this] != null) return null
+        context.mapping.defaultArgumentsDispatchFunction[this]?.let { return it }
+        if (this is IrSimpleFunction) {
+            // If this is an override of a function with default arguments, produce a fake override of a default stub.
+            if (overriddenSymbols.any { it.owner.findBaseFunctionWithDefaultArguments(skipInlineMethods, skipExternalMethods) != null })
+                return generateDefaultsFunctionImpl(
+                    context, IrDeclarationOrigin.FAKE_OVERRIDE, visibility, true, useConstructorMarker
+                ).also { defaultsFunction ->
+                    context.mapping.defaultArgumentsDispatchFunction[this] = defaultsFunction
+                    context.mapping.defaultArgumentsOriginalFunction[defaultsFunction] = this
 
-                if (forceSetOverrideSymbols) {
-                    (defaultsFunction as IrSimpleFunction).overriddenSymbols += overriddenSymbols.mapNotNull {
-                        it.owner.generateDefaultsFunction(
-                            context,
-                            skipInlineMethods,
-                            skipExternalMethods,
-                            forceSetOverrideSymbols,
-                            visibility,
-                            useConstructorMarker
-                        )?.symbol as IrSimpleFunctionSymbol?
+                    if (forceSetOverrideSymbols) {
+                        (defaultsFunction as IrSimpleFunction).overriddenSymbols += overriddenSymbols.mapNotNull {
+                            it.owner.generateDefaultsFunction(
+                                context,
+                                skipInlineMethods,
+                                skipExternalMethods,
+                                forceSetOverrideSymbols,
+                                visibility,
+                                useConstructorMarker
+                            )?.symbol as IrSimpleFunctionSymbol?
+                        }
                     }
                 }
+        }
+        // Note: this is intentionally done *after* checking for overrides. While normally `override fun`s
+        // have no default parameters, there is an exception in case of interface delegation:
+        //     interface I {
+        //         fun f(x: Int = 1)
+        //     }
+        //     class C(val y: I) : I by y {
+        //         // implicit `override fun f(x: Int) = y.f(x)` has a default value for `x`
+        //     }
+        // Since this bug causes the metadata serializer to write the "has default value" flag into compiled
+        // binaries, it's way too late to fix it. Hence the workaround.
+        if (valueParameters.any { it.defaultValue != null }) {
+            return generateDefaultsFunctionImpl(
+                context, IrDeclarationOrigin.FUNCTION_FOR_DEFAULT_PARAMETER, visibility, false, useConstructorMarker
+            ).also {
+                context.mapping.defaultArgumentsDispatchFunction[this] = it
+                context.mapping.defaultArgumentsOriginalFunction[it] = this
             }
-    }
-    // Note: this is intentionally done *after* checking for overrides. While normally `override fun`s
-    // have no default parameters, there is an exception in case of interface delegation:
-    //     interface I {
-    //         fun f(x: Int = 1)
-    //     }
-    //     class C(val y: I) : I by y {
-    //         // implicit `override fun f(x: Int) = y.f(x)` has a default value for `x`
-    //     }
-    // Since this bug causes the metadata serializer to write the "has default value" flag into compiled
-    // binaries, it's way too late to fix it. Hence the workaround.
-    if (valueParameters.any { it.defaultValue != null }) {
-        return generateDefaultsFunctionImpl(
-            context, IrDeclarationOrigin.FUNCTION_FOR_DEFAULT_PARAMETER, visibility, false, useConstructorMarker
-        ).also {
-            context.mapping.defaultArgumentsDispatchFunction[this] = it
-            context.mapping.defaultArgumentsOriginalFunction[it] = this
         }
     }
     return null

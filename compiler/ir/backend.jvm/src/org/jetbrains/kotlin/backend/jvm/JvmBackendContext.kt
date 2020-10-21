@@ -42,6 +42,7 @@ import org.jetbrains.kotlin.psi2ir.PsiErrorBuilder
 import org.jetbrains.kotlin.psi2ir.PsiSourceManager
 import org.jetbrains.kotlin.resolve.jvm.JvmClassName
 import org.jetbrains.org.objectweb.asm.Type
+import java.util.concurrent.ConcurrentHashMap
 
 typealias MetadataSerializerFactory = (JvmBackendContext, IrClass, Type, JvmSerializationBindings, MetadataSerializer?) -> MetadataSerializer
 
@@ -60,7 +61,7 @@ class JvmBackendContext(
     override val transformedFunction: MutableMap<IrFunctionSymbol, IrSimpleFunctionSymbol>
         get() = TODO("not implemented")
 
-    override val extractedLocalClasses: MutableSet<IrClass> = hashSetOf()
+    override val extractedLocalClasses: MutableSet<IrClass> = ConcurrentHashMap.newKeySet()
 
     override val irFactory: IrFactory = IrFactoryImpl
 
@@ -83,7 +84,7 @@ class JvmBackendContext(
 
     val irIntrinsics by lazy { IrIntrinsicMethods(irBuiltIns, ir.symbols) }
 
-    private val localClassType = mutableMapOf<IrAttributeContainer, Type>()
+    private val localClassType = ConcurrentHashMap<IrAttributeContainer, Type>()
 
     internal fun getLocalClassType(container: IrAttributeContainer): Type? =
         localClassType[container.attributeOwnerId]
@@ -92,34 +93,35 @@ class JvmBackendContext(
         localClassType[container.attributeOwnerId] = value
     }
 
-    internal val isEnclosedInConstructor = mutableSetOf<IrAttributeContainer>()
+    internal val isEnclosedInConstructor = ConcurrentHashMap.newKeySet<IrAttributeContainer>()
 
+    // Only used from codegen, no need for synchronization for now
     internal val classCodegens = mutableMapOf<IrClass, ClassCodegen>()
 
-    val localDelegatedProperties = mutableMapOf<IrAttributeContainer, List<IrLocalDelegatedPropertySymbol>>()
+    val localDelegatedProperties = ConcurrentHashMap<IrAttributeContainer, List<IrLocalDelegatedPropertySymbol>>()
 
-    internal val multifileFacadesToAdd = mutableMapOf<JvmClassName, MutableList<IrClass>>()
-    val multifileFacadeForPart = mutableMapOf<IrClass, JvmClassName>()
-    internal val multifileFacadeClassForPart = mutableMapOf<IrClass, IrClass>()
-    internal val multifileFacadeMemberToPartMember = mutableMapOf<IrSimpleFunction, IrSimpleFunction>()
+    internal val multifileFacadesToAdd = ConcurrentHashMap<JvmClassName, MutableList<IrClass>>()
+    val multifileFacadeForPart = ConcurrentHashMap<IrClass, JvmClassName>()
+    internal val multifileFacadeClassForPart = ConcurrentHashMap<IrClass, IrClass>()
+    internal val multifileFacadeMemberToPartMember = ConcurrentHashMap<IrSimpleFunction, IrSimpleFunction>()
 
-    internal val hiddenConstructors = mutableMapOf<IrConstructor, IrConstructor>()
+    internal val hiddenConstructors = ConcurrentHashMap<IrConstructor, IrConstructor>()
 
     internal val collectionStubComputer = CollectionStubComputer(this)
     internal val bridgeLoweringCache = BridgeLowering.BridgeLoweringCache(this)
-    internal val functionsWithSpecialBridges: MutableSet<IrFunction> = HashSet()
+    internal val functionsWithSpecialBridges: MutableSet<IrFunction> = ConcurrentHashMap.newKeySet()
 
-    override var inVerbosePhase: Boolean = false
+    override var inVerbosePhase: Boolean = false // TODO: needs parallelizing
 
     override val configuration get() = state.configuration
 
     override val internalPackageFqn = FqName("kotlin.jvm")
 
-    val suspendLambdaToOriginalFunctionMap = mutableMapOf<IrFunctionReference, IrFunction>()
-    val suspendFunctionOriginalToView = mutableMapOf<IrFunction, IrFunction>()
+    val suspendLambdaToOriginalFunctionMap = ConcurrentHashMap<IrFunctionReference, IrFunction>()
+    val suspendFunctionOriginalToView = ConcurrentHashMap<IrFunction, IrFunction>()
     val fakeContinuation: IrExpression = createFakeContinuation(this)
 
-    val staticDefaultStubs = mutableMapOf<IrSimpleFunctionSymbol, IrSimpleFunction>()
+    val staticDefaultStubs = ConcurrentHashMap<IrSimpleFunctionSymbol, IrSimpleFunction>()
 
     val inlineClassReplacements = MemoizedInlineClassReplacements(state.functionsWithInlineClassReturnTypesMangled, irFactory)
 

@@ -23,6 +23,7 @@ import org.jetbrains.kotlin.ir.declarations.lazy.lazyVar
 import org.jetbrains.kotlin.ir.expressions.IrConstructorCall
 import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.types.impl.IrSimpleTypeImpl
+import org.jetbrains.kotlin.ir.util.withScope
 import org.jetbrains.kotlin.name.Name
 
 class Fir2IrLazyClass(
@@ -99,20 +100,20 @@ class Fir2IrLazyClass(
     }
 
     override var thisReceiver: IrValueParameter? by lazyVar {
-        symbolTable.enterScope(this)
-        val typeArguments = fir.typeParameters.map {
-            IrSimpleTypeImpl(
-                classifierStorage.getCachedIrTypeParameter(it.symbol.fir)!!.symbol,
-                hasQuestionMark = false, arguments = emptyList(), annotations = emptyList()
+        symbolTable.withScope(this) {
+            val typeArguments = fir.typeParameters.map {
+                IrSimpleTypeImpl(
+                    classifierStorage.getCachedIrTypeParameter(it.symbol.fir)!!.symbol,
+                    hasQuestionMark = false, arguments = emptyList(), annotations = emptyList()
+                )
+            }
+            val receiver = declareThisReceiverParameter(
+                symbolTable,
+                thisType = IrSimpleTypeImpl(symbol, hasQuestionMark = false, arguments = typeArguments, annotations = emptyList()),
+                thisOrigin = IrDeclarationOrigin.INSTANCE_RECEIVER
             )
+            receiver
         }
-        val receiver = declareThisReceiverParameter(
-            symbolTable,
-            thisType = IrSimpleTypeImpl(symbol, hasQuestionMark = false, arguments = typeArguments, annotations = emptyList()),
-            thisOrigin = IrDeclarationOrigin.INSTANCE_RECEIVER
-        )
-        symbolTable.leaveScope(this)
-        receiver
     }
 
     override val declarations: MutableList<IrDeclaration> by lazyVar {

@@ -178,6 +178,14 @@ class Fir2IrDeclarationStorage(
         symbolTable.leaveScope(declaration)
     }
 
+    inline fun <T> withScopeSynchronized(declaration: IrDeclaration, block: () -> T): T =
+        synchronized(symbolTable) {
+            enterScope(declaration)
+            block().also {
+                leaveScope(declaration)
+            }
+        }
+
     private fun FirTypeRef.toIrType(typeContext: ConversionTypeContext = ConversionTypeContext.DEFAULT): IrType =
         with(typeConverter) { toIrType(typeContext) }
 

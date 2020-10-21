@@ -91,40 +91,37 @@ class Fir2IrLazySimpleFunction(
     override var dispatchReceiverParameter: IrValueParameter? by lazyVar {
         val containingClass = parent as? IrClass
         if (!fir.isStatic && containingClass != null) {
-            declarationStorage.enterScope(this)
-            declareThisReceiverParameter(
-                symbolTable,
-                thisType = containingClass.thisReceiver?.type ?: error("No this receiver for containing class"),
-                thisOrigin = origin
-            ).apply {
-                declarationStorage.leaveScope(this@Fir2IrLazySimpleFunction)
+            declarationStorage.withScopeSynchronized(this) {
+                declareThisReceiverParameter(
+                    symbolTable,
+                    thisType = containingClass.thisReceiver?.type ?: error("No this receiver for containing class"),
+                    thisOrigin = origin
+                )
             }
         } else null
     }
 
     override var extensionReceiverParameter: IrValueParameter? by lazyVar {
         fir.receiverTypeRef?.let {
-            declarationStorage.enterScope(this)
-            declareThisReceiverParameter(
-                symbolTable,
-                thisType = it.toIrType(typeConverter),
-                thisOrigin = origin,
-            ).apply {
-                declarationStorage.leaveScope(this@Fir2IrLazySimpleFunction)
+            declarationStorage.withScopeSynchronized(this) {
+                declareThisReceiverParameter(
+                    symbolTable,
+                    thisType = it.toIrType(typeConverter),
+                    thisOrigin = origin,
+                )
             }
         }
     }
 
     override var valueParameters: List<IrValueParameter> by lazyVar {
-        declarationStorage.enterScope(this)
-        fir.valueParameters.mapIndexed { index, valueParameter ->
-            declarationStorage.createIrParameter(
-                valueParameter, index,
-            ).apply {
-                this.parent = this@Fir2IrLazySimpleFunction
+        declarationStorage.withScopeSynchronized(this) {
+            fir.valueParameters.mapIndexed { index, valueParameter ->
+                declarationStorage.createIrParameter(
+                    valueParameter, index,
+                ).apply {
+                    this.parent = this@Fir2IrLazySimpleFunction
+                }
             }
-        }.apply {
-            declarationStorage.leaveScope(this@Fir2IrLazySimpleFunction)
         }
     }
 

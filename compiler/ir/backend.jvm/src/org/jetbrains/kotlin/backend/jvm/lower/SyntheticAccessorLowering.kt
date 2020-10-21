@@ -210,7 +210,7 @@ internal class SyntheticAccessorLowering(val context: JvmBackendContext) : IrEle
     }
 
     private val IrConstructor.isOrShouldBeHidden: Boolean
-        get() = this in context.hiddenConstructors || (
+        get() = this in context.hiddenConstructors.keys || (
                 !DescriptorVisibilities.isPrivate(visibility) && !constructedClass.isInline && hasMangledParameters &&
                         origin != IrDeclarationOrigin.FUNCTION_FOR_DEFAULT_PARAMETER &&
                         origin != JvmLoweredDeclarationOrigin.SYNTHETIC_ACCESSOR &&

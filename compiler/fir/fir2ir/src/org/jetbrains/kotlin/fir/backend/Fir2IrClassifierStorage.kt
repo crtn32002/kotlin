@@ -36,6 +36,7 @@ import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.types.impl.IrSimpleTypeImpl
 import org.jetbrains.kotlin.ir.util.IdSignature
 import org.jetbrains.kotlin.ir.util.constructors
+import org.jetbrains.kotlin.ir.util.withScope
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.Name
 
@@ -78,16 +79,16 @@ class Fir2IrClassifierStorage(
     }
 
     private fun IrClass.setThisReceiver(typeParameters: List<FirTypeParameterRef>) {
-        symbolTable.enterScope(this)
-        val typeArguments = typeParameters.map {
-            IrSimpleTypeImpl(getIrTypeParameterSymbol(it.symbol, ConversionTypeContext.DEFAULT), false, emptyList(), emptyList())
+        symbolTable.withScope(this) {
+            val typeArguments = typeParameters.map {
+                IrSimpleTypeImpl(getIrTypeParameterSymbol(it.symbol, ConversionTypeContext.DEFAULT), false, emptyList(), emptyList())
+            }
+            thisReceiver = declareThisReceiverParameter(
+                symbolTable,
+                thisType = IrSimpleTypeImpl(symbol, false, typeArguments, emptyList()),
+                thisOrigin = IrDeclarationOrigin.INSTANCE_RECEIVER
+            )
         }
-        thisReceiver = declareThisReceiverParameter(
-            symbolTable,
-            thisType = IrSimpleTypeImpl(symbol, false, typeArguments, emptyList()),
-            thisOrigin = IrDeclarationOrigin.INSTANCE_RECEIVER
-        )
-        symbolTable.leaveScope(this)
     }
 
     internal fun preCacheTypeParameters(owner: FirTypeParameterRefsOwner) {

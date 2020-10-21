@@ -74,6 +74,9 @@ interface ReferenceSymbolTable {
     fun leaveScope(owner: DeclarationDescriptor)
 
     fun leaveScope(owner: IrDeclaration)
+
+    val lock: Any
+        get() = this
 }
 
 class SymbolTable(
@@ -1080,32 +1083,40 @@ class SymbolTable(
 
 @ObsoleteDescriptorBasedAPI
 inline fun <T, D : DeclarationDescriptor> SymbolTable.withScope(owner: D, block: SymbolTable.(D) -> T): T {
-    enterScope(owner)
-    val result = block(owner)
-    leaveScope(owner)
-    return result
+    synchronized(lock) {
+        enterScope(owner)
+        val result = block(owner)
+        leaveScope(owner)
+        return result
+    }
 }
 
 inline fun <T, D : IrDeclaration> SymbolTable.withScope(owner: D, block: SymbolTable.(D) -> T): T {
-    enterScope(owner)
-    val result = block(owner)
-    leaveScope(owner)
-    return result
+    synchronized(lock) {
+        enterScope(owner)
+        val result = block(owner)
+        leaveScope(owner)
+        return result
+    }
 }
 
 @ObsoleteDescriptorBasedAPI
 inline fun <T, D : DeclarationDescriptor> ReferenceSymbolTable.withReferenceScope(owner: D, block: ReferenceSymbolTable.(D) -> T): T {
-    enterScope(owner)
-    val result = block(owner)
-    leaveScope(owner)
-    return result
+    synchronized(lock) {
+        enterScope(owner)
+        val result = block(owner)
+        leaveScope(owner)
+        return result
+    }
 }
 
 inline fun <T, D : IrDeclaration> ReferenceSymbolTable.withReferenceScope(owner: D, block: ReferenceSymbolTable.(D) -> T): T {
-    enterScope(owner)
-    val result = block(owner)
-    leaveScope(owner)
-    return result
+    synchronized(lock) {
+        enterScope(owner)
+        val result = block(owner)
+        leaveScope(owner)
+        return result
+    }
 }
 
 val SymbolTable.allUnbound: Set<IrSymbol>

@@ -144,11 +144,15 @@ private class PerformByIrFilePhase<Context : CommonBackendContext>(
     private fun invokeParallel(
         phaseConfig: PhaseConfig, phaserState: PhaserState<IrModuleFragment>, context: Context, input: IrModuleFragment
     ): IrModuleFragment {
-        val threads = input.files.map { irFile ->
+        if (input.files.isEmpty()) return input
+
+        // Each thread needs its own copy of phaserState.alreadyDone
+        val filesAndStates = input.files.map { it to phaserState.clone() }
+        val threads = filesAndStates.map { (irFile, state) ->
             thread {
                 try {
                     for (phase in lower) {
-                        phase.invoke(phaseConfig, phaserState.changeType(), context, irFile)
+                        phase.invoke(phaseConfig, state.changeType(), context, irFile)
                     }
                 } catch (e: Throwable) {
                     CodegenUtil.reportBackendException(e, "IR lowering", irFile.fileEntry.name)
@@ -157,6 +161,9 @@ private class PerformByIrFilePhase<Context : CommonBackendContext>(
         }
 
         threads.forEach { it.join() }
+
+        // Presumably each thread has run through the same list of phases.
+        phaserState.alreadyDone.addAll(filesAndStates[0].second.alreadyDone)
 
         // TODO: no guarantee that module identity is preserved by `lower`
         return input

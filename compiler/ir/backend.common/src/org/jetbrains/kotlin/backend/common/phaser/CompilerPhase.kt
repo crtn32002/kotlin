@@ -8,7 +8,7 @@ package org.jetbrains.kotlin.backend.common.phaser
 import org.jetbrains.kotlin.backend.common.CommonBackendContext
 import kotlin.system.measureTimeMillis
 
-class PhaserState<Data>(
+data class PhaserState<Data>(
     val alreadyDone: MutableSet<AnyNamedPhase> = mutableSetOf(),
     var depth: Int = 0,
     var phaseCount: Int = 0,
@@ -24,6 +24,9 @@ inline fun <R, D> PhaserState<D>.downlevel(nlevels: Int, block: () -> R): R {
     depth -= nlevels
     return result
 }
+
+fun <Data> PhaserState<Data>.clone() =
+    PhaserState<Data>(alreadyDone.toMutableSet(), depth, phaseCount, stickyPostconditions)
 
 interface CompilerPhase<in Context : CommonBackendContext, Input, Output> {
     fun invoke(phaseConfig: PhaseConfig, phaserState: PhaserState<Input>, context: Context, input: Input): Output

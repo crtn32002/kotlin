@@ -6,6 +6,7 @@
 package org.jetbrains.kotlin.backend.common
 
 import org.jetbrains.kotlin.ir.declarations.*
+import java.util.concurrent.ConcurrentHashMap
 import kotlin.reflect.KMutableProperty0
 import kotlin.reflect.KProperty
 
@@ -44,7 +45,7 @@ open class DefaultMapping : Mapping {
     override val reflectedNameAccessor: Mapping.Delegate<IrClass, IrSimpleFunction> = newMapping()
 
     protected open fun <K : IrDeclaration, V> newMapping() = object : Mapping.Delegate<K, V>() {
-        private val map: MutableMap<K, V> = mutableMapOf()
+        private val map: MutableMap<K, V> = ConcurrentHashMap()
 
         override operator fun get(key: K): V? {
             return map[key]
@@ -64,6 +65,8 @@ fun <V : Any> KMutableProperty0<V?>.getOrPut(fn: () -> V) = this.get() ?: fn().a
     this.set(it)
 }
 
-fun <K : IrDeclaration, V> Mapping.Delegate<K, V>.getOrPut(key: K, fn: () -> V) = this[key] ?: fn().also {
-    this[key] = it
+fun <K : IrDeclaration, V> Mapping.Delegate<K, V>.getOrPut(key: K, fn: () -> V) = synchronized(this) {
+    this[key] ?: fn().also {
+        this[key] = it
+    }
 }

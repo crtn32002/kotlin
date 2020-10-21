@@ -41,6 +41,8 @@ class TypeTranslator(
     private val typeApproximatorForNI = TypeApproximator(builtIns)
     lateinit var constantValueGenerator: ConstantValueGenerator
 
+    val symbolTableLock: Any = if (enterTableScope) symbolTable.lock else object {}
+
     fun enterScope(irElement: IrTypeParametersContainer) {
         typeParametersResolver.enterTypeParameterScope(irElement)
         if (enterTableScope) {
@@ -65,10 +67,14 @@ class TypeTranslator(
     }
 
     inline fun <T> buildWithScope(container: IrTypeParametersContainer, builder: () -> T): T {
-        enterScope(container)
-        val result = builder()
-        leaveScope(container)
-        return result
+        synchronized(this) {
+            synchronized(symbolTableLock) {
+                enterScope(container)
+                val result = builder()
+                leaveScope(container)
+                return result
+            }
+        }
     }
 
     private fun resolveTypeParameter(typeParameterDescriptor: TypeParameterDescriptor): IrTypeParameterSymbol {
@@ -78,7 +84,9 @@ class TypeTranslator(
     }
 
     fun translateType(kotlinType: KotlinType): IrType =
-        translateType(kotlinType, Variance.INVARIANT).type
+        synchronized(this) {
+            translateType(kotlinType, Variance.INVARIANT).type
+        }
 
     private fun translateType(kotlinType: KotlinType, variance: Variance): IrTypeProjection {
         val approximatedType = approximate(kotlinType)

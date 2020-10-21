@@ -75,13 +75,12 @@ class Fir2IrLazyConstructor(
         val containingClass = parent as? IrClass
         val outerClass = containingClass?.parentClassOrNull
         if (containingClass?.isInner == true && outerClass != null) {
-            declarationStorage.enterScope(this)
-            declareThisReceiverParameter(
-                symbolTable,
-                thisType = outerClass.thisReceiver!!.type,
-                thisOrigin = origin
-            ).apply {
-                declarationStorage.leaveScope(this@Fir2IrLazyConstructor)
+            declarationStorage.withScopeSynchronized(this) {
+                declareThisReceiverParameter(
+                    symbolTable,
+                    thisType = outerClass.thisReceiver!!.type,
+                    thisOrigin = origin
+                )
             }
         } else null
     }
@@ -93,16 +92,15 @@ class Fir2IrLazyConstructor(
         }
 
     override var valueParameters: List<IrValueParameter> by lazyVar {
-        declarationStorage.enterScope(this)
-        fir.valueParameters.mapIndexed { index, valueParameter ->
-            declarationStorage.createIrParameter(
-                valueParameter, index,
-                useStubForDefaultValueStub = (parent as? IrClass)?.name != Name.identifier("Enum")
-            ).apply {
-                this.parent = this@Fir2IrLazyConstructor
+        declarationStorage.withScopeSynchronized(this) {
+            fir.valueParameters.mapIndexed { index, valueParameter ->
+                declarationStorage.createIrParameter(
+                    valueParameter, index,
+                    useStubForDefaultValueStub = (parent as? IrClass)?.name != Name.identifier("Enum")
+                ).apply {
+                    this.parent = this@Fir2IrLazyConstructor
+                }
             }
-        }.apply {
-            declarationStorage.leaveScope(this@Fir2IrLazyConstructor)
         }
     }
 
