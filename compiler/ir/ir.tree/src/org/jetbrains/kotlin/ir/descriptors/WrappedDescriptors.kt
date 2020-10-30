@@ -105,6 +105,8 @@ abstract class WrappedDeclarationDescriptor<T : IrDeclaration> : DeclarationDesc
     }
 
     fun isBound(): Boolean = _owner != null
+
+    override fun toString(): String = _owner?.render() ?: "<Unbound ${super.toString()}>"
 }
 
 abstract class WrappedCallableDescriptor<T : IrDeclaration> : CallableDescriptor, WrappedDeclarationDescriptor<T>() {
