@@ -203,7 +203,7 @@ internal class Kotlin2JvmSourceSetProcessor(
 
         ScriptingGradleSubplugin.configureForSourceSet(project, kotlinCompilation.compilationName)
 
-        project.whenEvaluated {
+        project.afterEvaluationQueue.schedule {
             val subpluginEnvironment = SubpluginEnvironment.loadSubplugins(project, kotlinPluginVersion)
             subpluginEnvironment.addSubpluginOptions(project, kotlinCompilation)
 
@@ -259,7 +259,7 @@ internal class Kotlin2JsSourceSetProcessor(
         }
 
         // outputFile can be set later during the configuration phase, get it only after the phase:
-        project.whenEvaluated {
+        project.afterEvaluationQueue.schedule {
             kotlinTask.configure { kotlinTaskInstance ->
                 kotlinTaskInstance.kotlinOptions.outputFile = kotlinTaskInstance.outputFile.absolutePath
                 val outputDir = kotlinTaskInstance.outputFile.parentFile
@@ -330,7 +330,7 @@ internal class KotlinJsIrSourceSetProcessor(
                 }
             }
 
-        project.whenEvaluated {
+        project.afterEvaluationQueue.schedule {
             val subpluginEnvironment: SubpluginEnvironment = SubpluginEnvironment.loadSubplugins(project, kotlinPluginVersion)
             subpluginEnvironment.addSubpluginOptions(project, kotlinCompilation)
         }
@@ -368,7 +368,7 @@ internal class KotlinCommonSourceSetProcessor(
             project.locateTask<Task>(kotlinCompilation.target.artifactsTaskName)?.dependsOn(kotlinTask)
         }
 
-        project.whenEvaluated {
+        project.afterEvaluationQueue.schedule {
             val subpluginEnvironment: SubpluginEnvironment = SubpluginEnvironment.loadSubplugins(project, kotlinPluginVersion)
             subpluginEnvironment.addSubpluginOptions(project, kotlinCompilation)
         }
@@ -533,7 +533,7 @@ internal abstract class AbstractKotlinPlugin(
             // Since the 'java' plugin (as opposed to 'java-library') doesn't known anything about the 'api' configurations,
             // add the API dependencies of the main compilation directly to the 'apiElements' configuration, so that the 'api' dependencies
             // are properly published with the 'compile' scope (KT-28355):
-            project.whenEvaluated {
+            project.afterEvaluationQueue.schedule {
                 project.configurations.apply {
                     val apiElementsConfiguration = getByName(kotlinTarget.apiElementsConfigurationName)
                     val mainCompilation = kotlinTarget.compilations.getByName(KotlinCompilation.MAIN_COMPILATION_NAME)
@@ -696,7 +696,7 @@ internal open class KotlinAndroidPlugin(
 
         registry.register(KotlinModelBuilder(kotlinPluginVersion, androidTarget))
 
-        project.whenEvaluated { project.components.addAll(androidTarget.components) }
+        project.afterEvaluationQueue.schedule { project.components.addAll(androidTarget.components) }
     }
 
     companion object {
@@ -783,7 +783,7 @@ abstract class AbstractAndroidProjectHandler(private val kotlinConfigurationTool
         }
 
         val kotlinOptions = KotlinJvmOptionsImpl()
-        project.whenEvaluated {
+        project.afterEvaluationQueue.schedule {
             // TODO don't require the flag once there is an Android Gradle plugin build that supports desugaring of Long.hashCode and
             //  Boolean.hashCode. Instead, run conditionally, only with the AGP versions that play well with Kotlin bytecode for
             //  JVM target 1.8.
@@ -795,11 +795,6 @@ abstract class AbstractAndroidProjectHandler(private val kotlinConfigurationTool
 
         kotlinOptions.noJdk = true
         ext.addExtension(KOTLIN_OPTIONS_DSL_NAME, kotlinOptions)
-
-        val androidPluginIds = listOf(
-            "android", "com.android.application", "android-library", "com.android.library",
-            "com.android.test", "com.android.feature", "com.android.dynamic-feature", "com.android.instantapp"
-        )
 
         val plugin by lazy {
             androidPluginIds.asSequence()
@@ -829,7 +824,7 @@ abstract class AbstractAndroidProjectHandler(private val kotlinConfigurationTool
 
         }
 
-        project.whenEvaluated {
+        project.afterEvaluationQueue.schedule {
             forEachVariant { variant ->
                 val compilation = kotlinAndroidTarget.compilations.getByName(getVariantName(variant))
                 postprocessVariant(variant, compilation, project, ext, plugin)

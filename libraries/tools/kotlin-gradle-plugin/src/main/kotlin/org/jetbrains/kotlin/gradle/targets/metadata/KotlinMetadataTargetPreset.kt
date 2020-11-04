@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.gradle.dsl.kotlinExtension
 import org.jetbrains.kotlin.gradle.plugin.*
 import org.jetbrains.kotlin.gradle.plugin.sources.applyLanguageSettingsToKotlinOptions
 import org.jetbrains.kotlin.gradle.targets.metadata.KotlinMetadataTargetConfigurator
+import org.jetbrains.kotlin.gradle.utils.afterEvaluationQueue
 
 class KotlinMetadataTargetPreset(
     project: Project,
@@ -55,7 +56,7 @@ class KotlinMetadataTargetPreset(
 
             mainCompilation.source(commonMainSourceSet)
 
-            project.whenEvaluated {
+            project.afterEvaluationQueue.schedule {
                 // Since there's no default source set, apply language settings from commonMain:
                 mainCompilation.compileKotlinTaskProvider.configure { compileKotlinMetadata ->
                     applyLanguageSettingsToKotlinOptions(commonMainSourceSet.languageSettings, compileKotlinMetadata.kotlinOptions)

@@ -36,6 +36,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompileTaskData
 import org.jetbrains.kotlin.gradle.tasks.locateTask
 import org.jetbrains.kotlin.gradle.tasks.registerTask
+import org.jetbrains.kotlin.gradle.utils.afterEvaluationQueue
 import org.jetbrains.kotlin.gradle.utils.isConfigurationCacheAvailable
 import java.io.ByteArrayOutputStream
 import java.io.File
@@ -358,7 +359,7 @@ class Kapt3GradleSubplugin @Inject internal constructor(private val registry: To
         }
 
         // Also register all the subplugin options from the Kotlin task:
-        project.whenEvaluated {
+        project.afterEvaluationQueue.schedule {
             taskProvider.configure { taskInstance ->
                 kotlinCompile.get().pluginOptions.subpluginOptionsByPluginId.forEach { (pluginId, options) ->
                     taskInstance.registerSubpluginOptionsAsInputs("kotlinCompile.$pluginId", options)
@@ -565,7 +566,7 @@ class Kapt3GradleSubplugin @Inject internal constructor(private val registry: To
             PropertiesProvider(project).mapKotlinTaskProperties(kaptTask)
         }
 
-        project.whenEvaluated {
+        project.afterEvaluationQueue.schedule {
             addCompilationSourcesToExternalCompileTask(kotlinCompilation, kaptTaskProvider)
         }
 

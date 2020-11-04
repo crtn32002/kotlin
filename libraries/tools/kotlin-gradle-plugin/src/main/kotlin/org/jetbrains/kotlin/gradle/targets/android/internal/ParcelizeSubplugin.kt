@@ -12,13 +12,14 @@ import org.gradle.api.Project
 import org.gradle.api.provider.Provider
 import org.jetbrains.kotlin.gradle.plugin.*
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinJvmAndroidCompilation
+import org.jetbrains.kotlin.gradle.utils.afterEvaluationQueue
 
 // Use apply plugin: 'kotlin-parcelize' to enable Android Extensions in an Android project.
 class ParcelizeSubplugin : KotlinCompilerPluginSupportPlugin {
     override fun apply(target: Project) {
         addParcelizeRuntime(target)
 
-        target.afterEvaluate {
+        target.afterEvaluationQueue.schedule {
             if (target.plugins.hasPlugin(AndroidSubplugin::class.java)) {
                 throw GradleException("${target.path}: 'kotlin-parcelize' can't be applied together with 'kotlin-android-extensions'")
             }

@@ -14,11 +14,11 @@ import org.jetbrains.kotlin.gradle.dsl.kotlinExtensionOrNull
 import org.jetbrains.kotlin.gradle.plugin.KotlinPlatformType
 import org.jetbrains.kotlin.gradle.plugin.KotlinTarget
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinJsCompilation
-import org.jetbrains.kotlin.gradle.plugin.whenEvaluated
 import org.jetbrains.kotlin.gradle.targets.js.KotlinJsTarget
 import org.jetbrains.kotlin.gradle.targets.js.npm.RequiresNpmDependencies
 import org.jetbrains.kotlin.gradle.targets.js.npm.resolved.KotlinProjectNpmResolution
 import org.jetbrains.kotlin.gradle.targets.js.testing.KotlinJsTest
+import org.jetbrains.kotlin.gradle.utils.afterEvaluationQueue
 import kotlin.reflect.KClass
 
 /**
@@ -46,7 +46,7 @@ internal class KotlinProjectNpmResolver(
         addContainerListeners()
 
 
-        project.whenEvaluated {
+        project.afterEvaluationQueue.schedule {
             val nodeJs = resolver.nodeJs
             project.tasks.implementing(RequiresNpmDependencies::class)
                 .configureEach { task ->

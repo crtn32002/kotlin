@@ -25,6 +25,7 @@ import org.jetbrains.kotlin.gradle.targets.native.KotlinNativeHostTestRun
 import org.jetbrains.kotlin.gradle.targets.native.KotlinNativeSimulatorTestRun
 import org.jetbrains.kotlin.gradle.targets.native.NativeBinaryTestRunSource
 import org.jetbrains.kotlin.gradle.tasks.locateOrRegisterTask
+import org.jetbrains.kotlin.gradle.utils.afterEvaluationQueue
 import org.jetbrains.kotlin.gradle.utils.dashSeparatedName
 import org.jetbrains.kotlin.konan.target.HostManager
 import org.jetbrains.kotlin.konan.target.KonanTarget
@@ -55,7 +56,7 @@ open class KotlinNativeTarget @Inject constructor(
         // NB: another usage context for the host-specific metadata may be added to this set below
         val mutableUsageContexts = createUsageContexts(mainCompilation).toMutableSet()
 
-        project.whenEvaluated {
+        project.afterEvaluationQueue.schedule {
             val hostSpecificSourceSets = getHostSpecificSourceSets(project)
                 .intersect(mainCompilation.allKotlinSourceSets)
 

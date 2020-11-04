@@ -147,7 +147,7 @@ abstract class AbstractKotlinCompilation<T : KotlinCommonOptions>(
 
     final override fun source(sourceSet: KotlinSourceSet) {
         if (kotlinSourceSets.add(sourceSet)) {
-            target.project.whenEvaluated {
+            target.project.afterEvaluationQueue.schedule {
                 addExactSourceSetsEagerly(sourceSet.getSourceSetHierarchy())
             }
         }

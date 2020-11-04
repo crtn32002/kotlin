@@ -17,6 +17,7 @@ import org.jetbrains.kotlin.gradle.tasks.Kotlin2JsCompile
 import org.jetbrains.kotlin.gradle.tasks.KotlinJsDce
 import org.jetbrains.kotlin.gradle.tasks.dependsOn
 import org.jetbrains.kotlin.gradle.tasks.registerTask
+import org.jetbrains.kotlin.gradle.utils.afterEvaluationQueue
 import org.jetbrains.kotlin.gradle.utils.lowerCamelCaseName
 import java.io.File
 
@@ -67,7 +68,7 @@ class KotlinJsDcePlugin : Plugin<Project> {
         }
         project.tasks.named("build").dependsOn(dceTask)
 
-        project.afterEvaluate {
+        project.afterEvaluationQueue.schedule {
             val outputDir = project.buildDir
                 .resolve(DEFAULT_OUT_DIR)
                 .resolve(kotlinCompilation.target.disambiguationClassifier?.let { "$it/" }.orEmpty() + kotlinCompilation.name)

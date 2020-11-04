@@ -8,6 +8,7 @@ package org.jetbrains.kotlin.gradle.plugin
 import org.gradle.api.Project
 import org.gradle.api.logging.Logging
 import org.gradle.api.tasks.TaskProvider
+import org.jetbrains.kotlin.gradle.utils.afterEvaluationQueue
 
 /**
  * This class encapsulated logic which should be invoked during not before the script evaluation is ready and
@@ -51,10 +52,8 @@ internal fun Project.runOnceAfterEvaluated(name: String, task: TaskProvider<*>, 
 }
 
 internal fun Project.runOnceAfterEvaluated(runOnce: RunOnceAfterEvaluated, task: TaskProvider<*>) {
-    if (state.executed) {
+    afterEvaluationQueue.schedule {
         runOnce.onEvaluated()
-    } else {
-        afterEvaluate { runOnce.onEvaluated() }
     }
     task.configure {
         runOnce.onConfigure()

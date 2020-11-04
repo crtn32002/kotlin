@@ -35,6 +35,7 @@ import org.jetbrains.kotlin.gradle.tasks.*
 import org.jetbrains.kotlin.gradle.testing.internal.configureConventions
 import org.jetbrains.kotlin.gradle.testing.internal.kotlinTestRegistry
 import org.jetbrains.kotlin.gradle.testing.testTaskName
+import org.jetbrains.kotlin.gradle.utils.afterEvaluationQueue
 import org.jetbrains.kotlin.konan.target.HostManager
 import org.jetbrains.kotlin.konan.target.KonanTarget
 import java.io.File
@@ -55,7 +56,7 @@ open class KotlinNativeTargetConfigurator<T : KotlinNativeTarget>(
     private fun addCompilerPlugins(compilation: AbstractKotlinNativeCompilation) {
         val project = compilation.target.project
 
-        project.whenEvaluated {
+        project.afterEvaluationQueue.schedule {
             SubpluginEnvironment
                 .loadSubplugins(project, kotlinPluginVersion)
                 .addSubpluginOptions(project, compilation)
@@ -308,7 +309,7 @@ open class KotlinNativeTargetConfigurator<T : KotlinNativeTarget>(
             project.registerTask<DefaultTask>(it.binariesTaskName)
         }
 
-        project.whenEvaluated {
+        project.afterEvaluationQueue.schedule {
             target.binaries.forEach { binary ->
                 project.tasks.named(binary.compilation.binariesTaskName).configure { binariesTask ->
                     binariesTask.dependsOn(binary.linkTaskName)
@@ -357,7 +358,7 @@ open class KotlinNativeTargetConfigurator<T : KotlinNativeTarget>(
         implementationToApiElements(target)
     }
 
-    private fun warnAboutIncorrectDependencies(target: KotlinNativeTarget) = target.project.whenEvaluated {
+    private fun warnAboutIncorrectDependencies(target: KotlinNativeTarget) = target.project.afterEvaluationQueue.schedule {
 
         val compileOnlyDependencies = target.compilations.mapNotNull {
             val dependencies = configurations.getByName(it.compileOnlyConfigurationName).allDependencies

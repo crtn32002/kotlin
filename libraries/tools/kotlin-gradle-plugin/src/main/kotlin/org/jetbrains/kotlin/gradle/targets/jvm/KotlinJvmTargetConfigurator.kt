@@ -18,6 +18,7 @@ import org.jetbrains.kotlin.gradle.tasks.locateTask
 import org.jetbrains.kotlin.gradle.tasks.registerTask
 import org.jetbrains.kotlin.gradle.testing.internal.kotlinTestRegistry
 import org.jetbrains.kotlin.gradle.testing.testTaskName
+import org.jetbrains.kotlin.gradle.utils.afterEvaluationQueue
 
 class KotlinJvmTargetConfigurator(kotlinPluginVersion: String) :
     KotlinOnlyTargetConfigurator<KotlinJvmCompilation, KotlinJvmTarget>(true, true, kotlinPluginVersion),
@@ -28,7 +29,7 @@ class KotlinJvmTargetConfigurator(kotlinPluginVersion: String) :
         super<KotlinTargetWithTestsConfigurator>.configurePlatformSpecificModel(target)
 
         // Create the configuration under the name 'compileClasspath', as Android lint tasks want it, KT-27170
-        target.project.whenEvaluated {
+        target.project.afterEvaluationQueue.schedule {
             if (configurations.findByName("compileClasspath") == null) {
                 configurations.create("compileClasspath").apply {
                     isCanBeResolved = false
@@ -61,7 +62,7 @@ class KotlinJvmTargetConfigurator(kotlinPluginVersion: String) :
 
         setExecutionSourceFrom(testCompilation)
 
-        target.project.whenEvaluated {
+        target.project.afterEvaluationQueue.schedule {
             // use afterEvaluate to override the JavaPlugin defaults for Test tasks
             testTaskOrProvider.configure { testTask ->
                 testTask.description = "Runs the tests of the $name test run."

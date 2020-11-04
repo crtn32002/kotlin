@@ -225,7 +225,7 @@ class KotlinMultiplatformPlugin(
                     if (it is KotlinAndroidTarget || it is KotlinMetadataTarget)
                     // Android targets have their variants created in afterEvaluate; TODO handle this better?
                     // Kotlin Metadata targets rely on complete source sets hierearchy and cannot be inspected for publication earlier
-                        project.whenEvaluated { it.createMavenPublications(publishing.publications) }
+                        project.afterEvaluationQueue.schedule { it.createMavenPublications(publishing.publications) }
                     else
                         it.createMavenPublications(publishing.publications)
                 }
@@ -241,7 +241,7 @@ class KotlinMultiplatformPlugin(
             .forEach { (gradleComponent, kotlinComponent) ->
                 val componentPublication = publications.create(kotlinComponent.name, MavenPublication::class.java).apply {
                     // do this in whenEvaluated since older Gradle versions seem to check the files in the variant eagerly:
-                    project.whenEvaluated {
+                    project.afterEvaluationQueue.schedule {
                         from(gradleComponent)
                         kotlinComponent.sourcesArtifacts.forEach { sourceArtifact ->
                             artifact(sourceArtifact)
@@ -308,7 +308,7 @@ class KotlinMultiplatformPlugin(
 
         UnusedSourceSetsChecker.checkSourceSets(project)
 
-        project.whenEvaluated {
+        project.afterEvaluationQueue.schedule {
             checkSourceSetVisibilityRequirements(project)
         }
     }
@@ -331,7 +331,7 @@ class KotlinMultiplatformPlugin(
 internal fun applyUserDefinedAttributes(target: AbstractKotlinTarget) {
     val project = target.project
 
-    project.whenEvaluated {
+    project.afterEvaluationQueue.schedule {
         fun copyAttributes(from: AttributeContainer, to: AttributeContainer) {
             fun <T> copyAttribute(key: Attribute<T>, from: AttributeContainer, to: AttributeContainer) {
                 to.attribute(key, from.getAttribute(key)!!)
@@ -389,7 +389,7 @@ internal fun sourcesJarTask(
         sourcesJar.archiveClassifier.set("sources")
     }
 
-    project.whenEvaluated {
+    project.afterEvaluationQueue.schedule {
         result.configure {
             sourceSets.value.forEach { sourceSet ->
                 it.from(sourceSet.kotlin) { copySpec ->

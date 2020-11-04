@@ -17,6 +17,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompileCommon
 
 interface KotlinMetadataCompilation<T : KotlinCommonOptions> : KotlinCompilation<T>
 
+ // TODO NOW: Investigate missing kotlinSourceSets!
 class KotlinCommonCompilation(
     target: KotlinTarget,
     name: String

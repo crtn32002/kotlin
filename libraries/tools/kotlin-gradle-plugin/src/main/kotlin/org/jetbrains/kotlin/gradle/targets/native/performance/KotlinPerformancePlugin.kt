@@ -16,6 +16,7 @@ import org.jetbrains.kotlin.gradle.plugin.addExtension
 import org.jetbrains.kotlin.gradle.plugin.mpp.disambiguateName
 import org.jetbrains.kotlin.gradle.targets.native.tasks.NativePerformanceReport
 import org.jetbrains.kotlin.gradle.tasks.registerTask
+import org.jetbrains.kotlin.gradle.utils.afterEvaluationQueue
 import org.jetbrains.kotlin.gradle.utils.isConfigurationCacheAvailable
 import org.jetbrains.kotlin.gradle.utils.lowerCamelCaseName
 import java.util.concurrent.ConcurrentHashMap
@@ -95,7 +96,7 @@ open class KotlinPerformancePlugin : Plugin<Project> {
             val performanceExtension = PerformanceExtension(this)
 
             kotlinExtension.addExtension(EXTENSION_NAME, performanceExtension)
-            afterEvaluate {
+            afterEvaluationQueue.schedule {
                 if (checkSettings(project, performanceExtension)) {
                     configureTasks(project, performanceExtension)
                 }
