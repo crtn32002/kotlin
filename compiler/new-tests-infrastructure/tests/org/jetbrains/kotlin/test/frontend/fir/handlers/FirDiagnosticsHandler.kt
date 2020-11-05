@@ -92,7 +92,7 @@ private class FirDiagnosticCodeMetaInfo(
     override val tag: String
         get() = renderConfiguration.getTag(this)
 
-    override val platforms: MutableList<String> = mutableListOf()
+    override val attributes: MutableList<String> = mutableListOf()
 
     override fun asString(): String = renderConfiguration.asString(this)
 }
