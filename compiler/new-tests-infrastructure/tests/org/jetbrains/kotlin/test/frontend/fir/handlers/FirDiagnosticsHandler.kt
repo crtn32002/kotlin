@@ -89,9 +89,10 @@ private class FirDiagnosticCodeMetaInfo(
     override val end: Int
         get() = diagnostic.element.endOffset
 
+    override val tag: String
+        get() = renderConfiguration.getTag(this)
+
     override val platforms: MutableList<String> = mutableListOf()
 
     override fun asString(): String = renderConfiguration.asString(this)
-
-    override fun getTag(): String = renderConfiguration.getTag(this)
 }
