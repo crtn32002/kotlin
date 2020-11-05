@@ -43,7 +43,9 @@ open class KotlinAndroidTarget(
      * all library variants will be published, but not test or application variants. */
     var publishLibraryVariants: List<String>? = listOf()
         // Workaround for Groovy GString items in a list:
-        set(value) { field = value?.map(Any::toString) }
+        set(value) {
+            field = value?.map(Any::toString)
+        }
 
     /** Add Android library variant names to [publishLibraryVariants]. */
     fun publishLibraryVariants(vararg names: String) {
@@ -124,6 +126,7 @@ open class KotlinAndroidTarget(
                     compilation,
                     usageContexts
                 ).apply {
+                    publishable = publishLibraryVariants?.contains(getVariantName(androidVariant)) ?: true
                     sourcesArtifacts = setOf(
                         sourcesJarArtifact(
                             compilation, compilation.disambiguateName(""),

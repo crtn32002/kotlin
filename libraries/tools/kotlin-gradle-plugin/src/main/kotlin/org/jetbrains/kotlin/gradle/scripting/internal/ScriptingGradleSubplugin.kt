@@ -26,7 +26,6 @@ import org.jetbrains.kotlin.gradle.internal.KaptGenerateStubsTask
 import org.jetbrains.kotlin.gradle.plugin.*
 import org.jetbrains.kotlin.gradle.scripting.ScriptingExtension
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
-import org.jetbrains.kotlin.gradle.utils.afterEvaluationQueue
 import org.jetbrains.kotlin.scripting.compiler.plugin.impl.reporter
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionsFromClasspathDiscoverySource
 import java.io.File
@@ -53,7 +52,7 @@ class ScriptingGradleSubplugin : Plugin<Project> {
     override fun apply(project: Project) {
         project.plugins.apply(ScriptingKotlinGradleSubplugin::class.java)
 
-        project.afterEvaluationQueue.schedule {
+        project.afterEvaluate {
             val javaPluginConvention = project.convention.findPlugin(JavaPluginConvention::class.java)
             if (javaPluginConvention?.sourceSets?.isEmpty() == false) {
 

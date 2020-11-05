@@ -15,7 +15,6 @@ import org.jetbrains.kotlin.gradle.plugin.KotlinCompilation
 import org.jetbrains.kotlin.gradle.plugin.KotlinCompilationOutput
 import org.jetbrains.kotlin.gradle.plugin.KotlinCompilationWithResources
 import org.jetbrains.kotlin.gradle.tasks.AbstractKotlinCompile
-import org.jetbrains.kotlin.gradle.utils.afterEvaluationQueue
 
  class KotlinWithJavaCompilation<KotlinOptionsType : KotlinCommonOptions>(
     target: KotlinWithJavaTarget<KotlinOptionsType>,
@@ -70,7 +69,7 @@ import org.jetbrains.kotlin.gradle.utils.afterEvaluationQueue
 
     fun source(javaSourceSet: SourceSet) {
         with(target.project) {
-            afterEvaluationQueue.schedule {
+            afterEvaluate {
                 (tasks.getByName(compileKotlinTaskName) as AbstractKotlinCompile<*>).source(javaSourceSet.java)
             }
         }

@@ -27,9 +27,7 @@ import org.jetbrains.kotlin.gradle.tasks.*
 import org.jetbrains.kotlin.gradle.tasks.KotlinTasksProvider
 import org.jetbrains.kotlin.gradle.tasks.locateTask
 import org.jetbrains.kotlin.gradle.tasks.registerTask
-import org.jetbrains.kotlin.gradle.utils.AfterEvaluationQueue.Stage.PostProcessing
 import org.jetbrains.kotlin.gradle.utils.addExtendsFromRelation
-import org.jetbrains.kotlin.gradle.utils.afterEvaluationQueue
 import org.jetbrains.kotlin.gradle.utils.lowerCamelCaseName
 import org.jetbrains.kotlin.statistics.metrics.BooleanMetrics
 
@@ -165,7 +163,7 @@ class KotlinMetadataTargetConfigurator(kotlinPluginVersion: String) :
     }
 
     private fun setupDependencyTransformationForCommonSourceSets(target: KotlinMetadataTarget) {
-        target.project.afterEvaluationQueue.schedule(PostProcessing) {
+        target.project.whenEvaluated {
             val publishedCommonSourceSets: Set<KotlinSourceSet> = getPublishedCommonSourceSets(project)
 
             kotlinExtension.sourceSets.all {
@@ -177,7 +175,7 @@ class KotlinMetadataTargetConfigurator(kotlinPluginVersion: String) :
     private fun createMetadataCompilationsForCommonSourceSets(
         target: KotlinMetadataTarget,
         allMetadataJar: TaskProvider<out Jar>
-    ) = target.project.afterEvaluationQueue.schedule(PostProcessing) {
+    ) = target.project.whenEvaluated {
         // Do this after all targets are configured by the user build script
 
         val publishedCommonSourceSets: Set<KotlinSourceSet> = getPublishedCommonSourceSets(project)

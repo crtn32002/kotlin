@@ -27,7 +27,6 @@ import org.gradle.util.WrapUtil
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 import org.jetbrains.kotlin.gradle.dsl.kotlinExtension
 import org.jetbrains.kotlin.gradle.plugin.*
-import org.jetbrains.kotlin.gradle.utils.afterEvaluationQueue
 import org.jetbrains.kotlin.gradle.utils.dashSeparatedName
 import org.jetbrains.kotlin.gradle.utils.lowerCamelCaseName
 
@@ -93,7 +92,7 @@ abstract class AbstractKotlinTarget(
         return kotlinVariants.map { kotlinVariant ->
             val adhocVariant = softwareComponentFactory.adhoc(kotlinVariant.name)
 
-            project.afterEvaluationQueue.schedule {
+            project.whenEvaluated {
                 (kotlinVariant as SoftwareComponentInternal).usages.filterIsInstance<KotlinUsageContext>().forEach { kotlinUsageContext ->
                     val publishedConfigurationName = publishedConfigurationName(kotlinUsageContext.name)
                     val configuration = project.configurations.findByName(publishedConfigurationName)

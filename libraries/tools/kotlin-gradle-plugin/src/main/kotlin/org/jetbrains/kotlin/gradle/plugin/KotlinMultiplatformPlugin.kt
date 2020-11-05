@@ -26,9 +26,9 @@ import org.gradle.api.tasks.SourceSet
 import org.jetbrains.kotlin.gradle.dsl.kotlinExtension
 import org.jetbrains.kotlin.gradle.logging.kotlinWarn
 import org.jetbrains.kotlin.gradle.tasks.AbstractKotlinCompile
-import org.jetbrains.kotlin.gradle.utils.AfterEvaluationQueue
 import org.jetbrains.kotlin.gradle.utils.SingleWarningPerBuild
-import org.jetbrains.kotlin.gradle.utils.afterEvaluationQueue
+import org.jetbrains.kotlin.gradle.utils.androidPluginIds
+import java.util.concurrent.atomic.AtomicBoolean
 
 abstract class KotlinPlatformPluginBase(protected val platformName: String) : Plugin<Project> {
     companion object {
@@ -90,7 +90,7 @@ open class KotlinPlatformImplementationPluginBase(platformName: String) : Kotlin
         }
 
         val incrementalMultiplatform = PropertiesProvider(project).incrementalMultiplatform ?: true
-        project.afterEvaluationQueue.schedule {
+        project.afterEvaluate {
             project.tasks.withType(AbstractKotlinCompile::class.java).all { task ->
                 if (task.incremental && !incrementalMultiplatform) {
                     task.logger.debug("IC is turned off for task '${task.path}' because multiplatform IC is not enabled")
@@ -105,7 +105,7 @@ open class KotlinPlatformImplementationPluginBase(platformName: String) : Kotlin
     private fun addCommonProject(commonProject: Project, platformProject: Project) {
         commonProjects.add(commonProject)
 
-        commonProject.afterEvaluationQueue.schedule {
+        commonProject.whenEvaluated {
             if (!commonProject.pluginManager.hasPlugin("kotlin-platform-common")) {
                 throw GradleException(
                     "Platform project $platformProject has an " +
@@ -166,7 +166,7 @@ open class KotlinPlatformImplementationPluginBase(platformName: String) : Kotlin
         project.kotlinExtension.sourceSets
 
     protected open fun addCommonSourceSetToPlatformSourceSet(commonSourceSet: Named, platformProject: Project) {
-        platformProject.afterEvaluationQueue.schedule {
+        platformProject.whenEvaluated {
             // At the point when the source set in the platform module is created, the task does not exist
             val platformTasks = platformProject.tasks
                 .withType(AbstractKotlinCompile::class.java)
@@ -209,12 +209,29 @@ open class KotlinPlatformImplementationPluginBase(platformName: String) : Kotlin
         }
 }
 
-@Suppress("DeprecatedCallableAddReplaceWith")
-@Deprecated("Use afterEvaluationQueue instead")
 internal fun <T> Project.whenEvaluated(fn: Project.() -> T) {
-    afterEvaluationQueue.schedule(AfterEvaluationQueue.Stage.AfterEvaluation) { fn() }
-}
+    if (state.executed) {
+        fn()
+        return
+    }
 
+    /* Make sure that all afterEvaluate blocks from the AndroidPlugin get scheduled first */
+    val isDispatched = AtomicBoolean(false)
+    androidPluginIds.forEach { androidPluginId ->
+        pluginManager.withPlugin(androidPluginId) {
+            if (!isDispatched.getAndSet(true)) {
+                afterEvaluate { fn() }
+            }
+        }
+    }
+
+    afterEvaluate {
+        /* If no Android plugin was loaded, then the action was not dispatched and we can freely execute it now */
+        if (!isDispatched.getAndSet(true)) {
+            fn()
+        }
+    }
+}
 
 open class KotlinPlatformAndroidPlugin : KotlinPlatformImplementationPluginBase("android") {
     override fun apply(project: Project) {

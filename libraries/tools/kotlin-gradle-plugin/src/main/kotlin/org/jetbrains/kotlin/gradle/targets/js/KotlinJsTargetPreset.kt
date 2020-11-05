@@ -14,7 +14,6 @@ import org.jetbrains.kotlin.gradle.plugin.statistics.KotlinBuildStatsService
 import org.jetbrains.kotlin.gradle.targets.js.KotlinJsTarget
 import org.jetbrains.kotlin.gradle.targets.js.KotlinJsTargetConfigurator
 import org.jetbrains.kotlin.gradle.targets.js.ir.KotlinJsIrTargetPreset
-import org.jetbrains.kotlin.gradle.utils.afterEvaluationQueue
 import org.jetbrains.kotlin.gradle.utils.lowerCamelCaseName
 import org.jetbrains.kotlin.statistics.metrics.StringMetrics
 
@@ -57,7 +56,7 @@ open class KotlinJsTargetPreset(
             }
             this.isMpp = this@KotlinJsTargetPreset.isMpp
 
-            project.afterEvaluationQueue.schedule {
+            project.whenEvaluated {
                 if (!isBrowserConfigured && !isNodejsConfigured) {
                     project.logger.warn(
                         """
