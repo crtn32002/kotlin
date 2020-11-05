@@ -18,6 +18,7 @@ import org.jetbrains.kotlin.test.frontend.classic.ClassicFrontend2IrConverter
 import org.jetbrains.kotlin.test.frontend.classic.ClassicFrontendFacade
 import org.jetbrains.kotlin.test.frontend.classic.handlers.ClassicDiagnosticsHandler
 import org.jetbrains.kotlin.test.frontend.classic.handlers.DeclarationsDumpHandler
+import org.jetbrains.kotlin.test.frontend.classic.handlers.OldNewInferenceMetaInfoProcessor
 import org.jetbrains.kotlin.test.frontend.fir.Fir2IrResultsConverter
 import org.jetbrains.kotlin.test.frontend.fir.FirFrontendFacade
 import org.jetbrains.kotlin.test.frontend.fir.handlers.FirDiagnosticsHandler
@@ -80,6 +81,7 @@ class SomeTest {
         assertions = JUnit5Assertions
 
         useConfigurators(::JvmEnvironmentConfigurator)
+        useMetaInfoProcessors(::OldNewInferenceMetaInfoProcessor)
 
         useFrontendFacades(::ClassicFrontendFacade)
         useFrontendHandlers(::DeclarationsDumpHandler, ::ClassicDiagnosticsHandler)

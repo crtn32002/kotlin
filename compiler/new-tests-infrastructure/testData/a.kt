@@ -21,7 +21,7 @@ fun test_2() = Utils.create()
 
 fun test_3(s: Any) {
     if (s is String) {
-        <!DEBUG_INFO_SMARTCAST!>s<!>.length
+        <!DEBUG_INFO_SMARTCAST, SOME_ERROR{OI}!>s<!>.length
     }
     return <!TYPE_MISMATCH("Unit; String")!>""<!>
 }
