@@ -18,5 +18,5 @@ package
 
 public fun test(): kotlin.Int
 public fun test_2(): kotlin.String!
-public fun test_3(): kotlin.Unit
+public fun test_3(/*0*/ s: kotlin.Any): kotlin.Unit
 
