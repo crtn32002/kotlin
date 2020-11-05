@@ -30,6 +30,7 @@ class TestConfigurationImpl(
     artifactsHandlers: List<Constructor<ArtifactsResultsHandler<*>>>,
 
     sourcePreprocessors: List<Constructor<SourceFilePreprocessor>>,
+    additionalMetaInfoProcessors: List<Constructor<AdditionalMetaInfoProcessor>>,
     environmentConfigurators: List<Constructor<EnvironmentConfigurator>>,
     directives: List<DirectivesContainer>,
     override val defaultRegisteredDirectives: RegisteredDirectives
@@ -71,7 +72,8 @@ class TestConfigurationImpl(
 
             register(DefaultRegisteredDirectivesProvider::class, DefaultRegisteredDirectivesProvider(this, defaultRegisteredDirectives))
 
-            register(GlobalMetadataInfoHandler::class, GlobalMetadataInfoHandler(this))
+            val metaInfoProcessors = additionalMetaInfoProcessors.map { it.invoke(this) }
+            register(GlobalMetadataInfoHandler::class, GlobalMetadataInfoHandler(this, metaInfoProcessors))
         }
 
         this.directives = when (allDirectives.size) {

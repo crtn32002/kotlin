@@ -9,10 +9,7 @@ import org.jetbrains.kotlin.test.TestConfiguration
 import org.jetbrains.kotlin.test.directives.DirectivesContainer
 import org.jetbrains.kotlin.test.impl.TestConfigurationImpl
 import org.jetbrains.kotlin.test.model.*
-import org.jetbrains.kotlin.test.services.Assertions
-import org.jetbrains.kotlin.test.services.DefaultsProvider
-import org.jetbrains.kotlin.test.services.SourceFilePreprocessor
-import org.jetbrains.kotlin.test.services.TestServices
+import org.jetbrains.kotlin.test.services.*
 import org.jetbrains.kotlin.test.services.configuration.EnvironmentConfigurator
 
 typealias Constructor<T> = (TestServices) -> T
@@ -30,6 +27,7 @@ class TestConfigurationBuilder {
     private val artifactsHandlers: MutableList<Constructor<ArtifactsResultsHandler<*>>> = mutableListOf()
 
     private val sourcePreprocessors: MutableList<Constructor<SourceFilePreprocessor>> = mutableListOf()
+    private val additionalMetaInfoProcessors: MutableList<Constructor<AdditionalMetaInfoProcessor>> = mutableListOf()
     private val environmentConfigurators: MutableList<Constructor<EnvironmentConfigurator>> = mutableListOf()
 
     private val directives: MutableList<DirectivesContainer> = mutableListOf()
@@ -75,6 +73,10 @@ class TestConfigurationBuilder {
         this.environmentConfigurators += environmentConfigurators
     }
 
+    fun useMetaInfoProcessors(vararg updaters: Constructor<AdditionalMetaInfoProcessor>) {
+        additionalMetaInfoProcessors += updaters
+    }
+
     inline fun defaultDirectives(init: RegisteredDirectivesBuilder.() -> Unit) {
         defaultRegisteredDirectivesBuilder.apply(init)
     }
@@ -90,6 +92,7 @@ class TestConfigurationBuilder {
             backendHandlers,
             artifactsHandlers,
             sourcePreprocessors,
+            additionalMetaInfoProcessors,
             environmentConfigurators,
             directives,
             defaultRegisteredDirectivesBuilder.build()

@@ -10,13 +10,19 @@ import org.jetbrains.kotlin.codeMetaInfo.CodeMetaInfoRenderer
 import org.jetbrains.kotlin.codeMetaInfo.model.CodeMetaInfo
 import org.jetbrains.kotlin.codeMetaInfo.model.ParsedCodeMetaInfo
 import org.jetbrains.kotlin.test.model.TestFile
+import org.jetbrains.kotlin.test.model.TestModule
 import org.jetbrains.kotlin.test.model.moduleStructure
 
-class GlobalMetadataInfoHandler(private val testServices: TestServices) : TestService {
+class GlobalMetadataInfoHandler(
+    private val testServices: TestServices,
+    private val processors: List<AdditionalMetaInfoProcessor>
+) : TestService {
     private lateinit var existingInfosPerFile: Map<TestFile, List<ParsedCodeMetaInfo>>
 
     private val infosPerFile: MutableMap<TestFile, MutableList<CodeMetaInfo>> =
         mutableMapOf<TestFile, MutableList<CodeMetaInfo>>().withDefault { mutableListOf() }
+
+    private val existingInfosPerFilePerInfoCache = mutableMapOf<Pair<TestFile, CodeMetaInfo>, List<ParsedCodeMetaInfo>>()
 
     @OptIn(ExperimentalStdlibApi::class)
     fun parseExistingMetadataInfosFromAllSources() {
@@ -31,8 +37,14 @@ class GlobalMetadataInfoHandler(private val testServices: TestServices) : TestSe
         return existingInfosPerFile.getValue(file)
     }
 
+    fun getReportedMetaInfosForFile(file: TestFile): List<CodeMetaInfo> {
+        return infosPerFile.getValue(file)
+    }
+
     fun getExistingMetaInfosForActualMetadata(file: TestFile, metaInfo: CodeMetaInfo): List<ParsedCodeMetaInfo> {
-        return getExistingMetaInfosForFile(file).filter { it == metaInfo }
+        return existingInfosPerFilePerInfoCache.getOrPut(file to metaInfo) {
+            getExistingMetaInfosForFile(file).filter { it == metaInfo }
+        }
     }
 
     fun addMetadataInfosForFile(file: TestFile, codeMetaInfos: List<CodeMetaInfo>) {
@@ -43,14 +55,17 @@ class GlobalMetadataInfoHandler(private val testServices: TestServices) : TestSe
     fun compareAllMetaDataInfos() {
         // TODO: adapt to multiple testdata files
         val moduleStructure = testServices.moduleStructure
-        val allFiles = moduleStructure.modules.flatMap { it.files }
         val builder = StringBuilder()
-        for (file in allFiles) {
-            CodeMetaInfoRenderer.renderTagsToText(
-                builder,
-                infosPerFile.getValue(file),
-                testServices.sourceFileProvider.getContentOfSourceFile(file)
-            )
+        for (module in moduleStructure.modules) {
+            for (file in module.files) {
+                processors.forEach { it.processMetaInfos(module, file) }
+                val codeMetaInfos = infosPerFile.getValue(file)
+                CodeMetaInfoRenderer.renderTagsToText(
+                    builder,
+                    codeMetaInfos,
+                    testServices.sourceFileProvider.getContentOfSourceFile(file)
+                )
+            }
         }
         val actualText = builder.toString()
         testServices.assertions.assertEqualsToFile(moduleStructure.originalTestDataFiles.single(), actualText)
@@ -58,3 +73,10 @@ class GlobalMetadataInfoHandler(private val testServices: TestServices) : TestSe
 }
 
 val TestServices.globalMetadataInfoHandler: GlobalMetadataInfoHandler by TestServices.testServiceAccessor()
+
+abstract class AdditionalMetaInfoProcessor(protected val testServices: TestServices) {
+    protected val globalMetadataInfoHandler: GlobalMetadataInfoHandler
+        get() = testServices.globalMetadataInfoHandler
+
+    abstract fun processMetaInfos(module: TestModule, file: TestFile)
+}
