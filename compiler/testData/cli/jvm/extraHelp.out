@@ -86,7 +86,6 @@ where advanced options include:
                              profilerPath is a path to libasyncProfiler.so
                              Example: -Xprofile=<PATH_TO_ASYNC_PROFILER>/async-profiler/build/libasyncProfiler.so:event=cpu,interval=1ms,threads,start,framebuf=50000000:<SNAPSHOT_DIR_PATH>
   -Xrepeat=<number>          Debug option: Repeats modules compilation <number> times
-  -Xir-run-lowerings-in-parallel When using the IR backend, run lowerings for each file in parallel
   -Xsanitize-parentheses     Transform '(' and ')' in method names to some other character sequence.
                              This mode can BREAK BINARY COMPATIBILITY and is only supposed to be used to workaround
                              problems with parentheses in identifiers on certain platforms
@@ -108,6 +107,9 @@ where advanced options include:
                              Default value is 'enable'
   -Xsuppress-missing-builtins-error
                              Suppress the "cannot access built-in declaration" error (useful with -no-stdlib)
+  -Xir-threads-for-file-lowerings
+                             When using the IR backend, run lowerings by file in N parallel threads.
+                             Default value is 1
   -Xuse-ir                   Use the IR backend
   -Xuse-javac                Use javac for Java source and class files analysis
   -Xuse-old-class-files-reading Use old class files reading implementation. This may slow down the build and cause problems with Groovy interop.
