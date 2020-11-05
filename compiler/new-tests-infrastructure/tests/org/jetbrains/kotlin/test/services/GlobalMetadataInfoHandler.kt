@@ -27,8 +27,12 @@ class GlobalMetadataInfoHandler(private val testServices: TestServices) : TestSe
         }
     }
 
-    fun getExistingMetadataForFile(file: TestFile): List<ParsedCodeMetaInfo> {
+    fun getExistingMetaInfosForFile(file: TestFile): List<ParsedCodeMetaInfo> {
         return existingInfosPerFile.getValue(file)
+    }
+
+    fun getExistingMetaInfosForActualMetadata(file: TestFile, metaInfo: CodeMetaInfo): List<ParsedCodeMetaInfo> {
+        return getExistingMetaInfosForFile(file).filter { it == metaInfo }
     }
 
     fun addMetadataInfosForFile(file: TestFile, codeMetaInfos: List<CodeMetaInfo>) {
