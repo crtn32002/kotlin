@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.backend.common.ir.*
 import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
 import org.jetbrains.kotlin.descriptors.DescriptorVisibility
 import org.jetbrains.kotlin.descriptors.Modality
+import org.jetbrains.kotlin.ir.IrLock
 import org.jetbrains.kotlin.ir.UNDEFINED_OFFSET
 import org.jetbrains.kotlin.ir.builders.*
 import org.jetbrains.kotlin.ir.builders.declarations.addValueParameter
@@ -489,7 +490,7 @@ private fun IrFunction.generateDefaultsFunction(
 ): IrFunction? {
     if (skipInlineMethods && isInline) return null
     if (skipExternalMethods && isExternalOrInheritedFromExternal()) return null
-    synchronized(context.mapping.defaultArgumentsDispatchFunction) {
+    synchronized(IrLock) {
         if (context.mapping.defaultArgumentsOriginalFunction[this] != null) return null
         context.mapping.defaultArgumentsDispatchFunction[this]?.let { return it }
         if (this is IrSimpleFunction) {

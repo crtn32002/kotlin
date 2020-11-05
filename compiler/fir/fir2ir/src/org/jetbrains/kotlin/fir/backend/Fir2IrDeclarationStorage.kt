@@ -32,6 +32,7 @@ import org.jetbrains.kotlin.fir.resolve.isKFunctionInvoke
 import org.jetbrains.kotlin.fir.symbols.*
 import org.jetbrains.kotlin.fir.symbols.impl.*
 import org.jetbrains.kotlin.fir.types.*
+import org.jetbrains.kotlin.ir.IrLock
 import org.jetbrains.kotlin.ir.ObsoleteDescriptorBasedAPI
 import org.jetbrains.kotlin.ir.UNDEFINED_OFFSET
 import org.jetbrains.kotlin.ir.builders.declarations.UNDEFINED_PARAMETER_INDEX
@@ -179,7 +180,7 @@ class Fir2IrDeclarationStorage(
     }
 
     inline fun <T> withScopeSynchronized(declaration: IrDeclaration, block: () -> T): T =
-        synchronized(symbolTable) {
+        synchronized(IrLock) {
             enterScope(declaration)
             block().also {
                 leaveScope(declaration)

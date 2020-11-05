@@ -5,6 +5,7 @@
 
 package org.jetbrains.kotlin.ir.declarations.lazy
 
+import org.jetbrains.kotlin.ir.IrLock
 import org.jetbrains.kotlin.ir.declarations.withInitialIr
 import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KProperty
@@ -20,7 +21,7 @@ private class SynchronizedLazyVar<T>(initializer: () -> T) : ReadWriteProperty<A
     private val value: T
         get() {
             if (isInitialized) return _value as T
-            synchronized(this) {
+            synchronized(IrLock) {
                 if (!isInitialized) {
                     withInitialIr { _value = initializer!!() }
                     isInitialized = true
@@ -36,7 +37,7 @@ private class SynchronizedLazyVar<T>(initializer: () -> T) : ReadWriteProperty<A
     override fun getValue(thisRef: Any?, property: KProperty<*>): T = value
 
     override fun setValue(thisRef: Any?, property: KProperty<*>, value: T) {
-        synchronized(this) {
+        synchronized(IrLock) {
             this._value = value
             isInitialized = true
         }

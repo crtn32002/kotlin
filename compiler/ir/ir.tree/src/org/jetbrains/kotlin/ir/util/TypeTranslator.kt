@@ -9,7 +9,7 @@ import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.descriptors.*
-import org.jetbrains.kotlin.descriptors.annotations.Annotations
+import org.jetbrains.kotlin.ir.IrLock
 import org.jetbrains.kotlin.ir.ObsoleteDescriptorBasedAPI
 import org.jetbrains.kotlin.ir.UNDEFINED_OFFSET
 import org.jetbrains.kotlin.ir.declarations.IrConstructor
@@ -41,8 +41,6 @@ class TypeTranslator(
     private val typeApproximatorForNI = TypeApproximator(builtIns)
     lateinit var constantValueGenerator: ConstantValueGenerator
 
-    val symbolTableLock: Any = if (enterTableScope) symbolTable.lock else object {}
-
     fun enterScope(irElement: IrTypeParametersContainer) {
         typeParametersResolver.enterTypeParameterScope(irElement)
         if (enterTableScope) {
@@ -67,13 +65,11 @@ class TypeTranslator(
     }
 
     inline fun <T> buildWithScope(container: IrTypeParametersContainer, builder: () -> T): T {
-        synchronized(this) {
-            synchronized(symbolTableLock) {
-                enterScope(container)
-                val result = builder()
-                leaveScope(container)
-                return result
-            }
+        synchronized(IrLock) {
+            enterScope(container)
+            val result = builder()
+            leaveScope(container)
+            return result
         }
     }
 
@@ -84,7 +80,7 @@ class TypeTranslator(
     }
 
     fun translateType(kotlinType: KotlinType): IrType =
-        synchronized(this) {
+        synchronized(IrLock) {
             translateType(kotlinType, Variance.INVARIANT).type
         }
 

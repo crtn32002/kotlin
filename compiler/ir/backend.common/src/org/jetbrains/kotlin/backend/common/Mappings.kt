@@ -5,6 +5,7 @@
 
 package org.jetbrains.kotlin.backend.common
 
+import org.jetbrains.kotlin.ir.IrLock
 import org.jetbrains.kotlin.ir.declarations.*
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.reflect.KMutableProperty0
@@ -65,7 +66,7 @@ fun <V : Any> KMutableProperty0<V?>.getOrPut(fn: () -> V) = this.get() ?: fn().a
     this.set(it)
 }
 
-fun <K : IrDeclaration, V> Mapping.Delegate<K, V>.getOrPut(key: K, fn: () -> V) = synchronized(this) {
+fun <K : IrDeclaration, V> Mapping.Delegate<K, V>.getOrPut(key: K, fn: () -> V) = synchronized(IrLock) {
     this[key] ?: fn().also {
         this[key] = it
     }
