@@ -5,6 +5,7 @@
 
 package org.jetbrains.kotlin.test
 
+import com.intellij.testFramework.TestDataFile
 import org.jetbrains.kotlin.test.impl.ModuleStructureExtractor
 import org.jetbrains.kotlin.test.model.*
 import org.jetbrains.kotlin.test.services.DependencyProviderImpl
@@ -15,7 +16,7 @@ import org.jetbrains.kotlin.test.services.registerDependencyProvider
 class TestRunner(private val testConfiguration: TestConfiguration) {
     private val failedAssertions = mutableListOf<AssertionError>()
 
-    fun runTest(testDataFileName: String) {
+    fun runTest(@TestDataFile testDataFileName: String) {
         val services = testConfiguration.testServices
         val moduleStructure = ModuleStructureExtractor.splitTestDataByModules(
             testDataFileName,
