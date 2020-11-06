@@ -19,6 +19,7 @@ private class SynchronizedLazyVar<T>(initializer: () -> T) : ReadWriteProperty<A
 
     private val value: T
         get() {
+            if (isInitialized) return _value as T
             synchronized(this) {
                 if (!isInitialized) {
                     withInitialIr { _value = initializer!!() }
