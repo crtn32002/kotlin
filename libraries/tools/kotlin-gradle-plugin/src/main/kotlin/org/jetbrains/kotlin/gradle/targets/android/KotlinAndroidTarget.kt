@@ -93,11 +93,16 @@ open class KotlinAndroidTarget(
         KotlinAndroidPlugin.androidTargetHandler(project.getKotlinPluginVersion()!!, this).doCreateComponents()
     }
 
+    private fun isVariantPublished(variant: BaseVariant): Boolean {
+        return publishLibraryVariants?.contains(getVariantName(variant)) ?: true
+    }
+
     private fun AbstractAndroidProjectHandler.doCreateComponents(): Set<KotlinTargetComponent> {
+
         val publishableVariants = mutableListOf<BaseVariant>()
             .apply { project.forEachVariant { add(it) } }
             .toList() // Defensive copy against unlikely modification by the lambda that captures the list above in forEachVariant { }
-            .filter { getLibraryOutputTask(it) != null && publishLibraryVariants?.contains(getVariantName(it)) ?: true }
+            .filter { getLibraryOutputTask(it) != null }
 
         val publishableVariantGroups = publishableVariants.groupBy { variant ->
             val flavorNames = getFlavorNames(variant)
@@ -126,7 +131,7 @@ open class KotlinAndroidTarget(
                     compilation,
                     usageContexts
                 ).apply {
-                    publishable = publishLibraryVariants?.contains(getVariantName(androidVariant)) ?: true
+                    publishable = isVariantPublished(androidVariant)
                     sourcesArtifacts = setOf(
                         sourcesJarArtifact(
                             compilation, compilation.disambiguateName(""),

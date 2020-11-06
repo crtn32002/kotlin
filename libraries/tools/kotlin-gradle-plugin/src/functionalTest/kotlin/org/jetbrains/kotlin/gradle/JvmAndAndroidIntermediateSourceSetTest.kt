@@ -15,6 +15,7 @@ import org.gradle.testfixtures.ProjectBuilder
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 import org.jetbrains.kotlin.gradle.dsl.multiplatformExtension
 import org.jetbrains.kotlin.gradle.plugin.KotlinSourceSet
+import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinAndroidTarget
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinMetadataCompilation
 import org.jetbrains.kotlin.gradle.plugin.mpp.buildKotlinProjectStructureMetadata
 import kotlin.test.*
@@ -82,5 +83,46 @@ class JvmAndAndroidIntermediateSourceSetTest {
         val metadata = assertNotNull(buildKotlinProjectStructureMetadata(project))
         assertTrue("jvmAndAndroidMain" in metadata.sourceSetNamesByVariantName["jvmApiElements"].orEmpty())
         assertTrue("jvmAndAndroidMain" in metadata.sourceSetNamesByVariantName["jvmRuntimeElements"].orEmpty())
+    }
+
+    @Test
+    fun `KotlinProjectStructureMetadata jvmAndAndroidMain exists in android variants`() {
+        project.evaluate()
+        val metadata = assertNotNull(buildKotlinProjectStructureMetadata(project))
+        assertTrue("jvmAndAndroidMain" in metadata.sourceSetNamesByVariantName["debugApiElements"].orEmpty())
+        assertTrue("jvmAndAndroidMain" in metadata.sourceSetNamesByVariantName["debugRuntimeElements"].orEmpty())
+        assertTrue("jvmAndAndroidMain" in metadata.sourceSetNamesByVariantName["releaseApiElements"].orEmpty())
+        assertTrue("jvmAndAndroidMain" in metadata.sourceSetNamesByVariantName["releaseRuntimeElements"].orEmpty())
+    }
+
+    @Test
+    fun `Android Kotlin Components are marked as not publishable when variant is not published`() {
+        val target = kotlin.targets.getByName("android") as KotlinAndroidTarget
+        target.publishLibraryVariants = emptyList()
+        project.evaluate()
+        val kotlinComponents = target.kotlinComponents
+        assertTrue(kotlinComponents.isNotEmpty(), "Expected at least one KotlinComponent to be present")
+
+        kotlinComponents.forEach { component ->
+            assertFalse(component.publishable, "Expected component to not publishable, because no publication is configured")
+        }
+    }
+
+    @Test
+    fun `Android Kotlin Components are marked as publishable when variant is published`() {
+        val target = kotlin.targets.getByName("android") as KotlinAndroidTarget
+        target.publishLibraryVariants = listOf("release")
+        project.evaluate()
+        val kotlinComponents = target.kotlinComponents
+        assertTrue(kotlinComponents.isNotEmpty(), "Expected at least one KotlinComponent to be present")
+
+        kotlinComponents.forEach { component ->
+            val isReleaseComponent = "release" in component.name.toLowerCase()
+            if (isReleaseComponent) {
+                assertTrue(component.publishable, "Expected release component to be marked as publishable")
+            } else {
+                assertFalse(component.publishable, "Expected non-release component to be marked as not publishable")
+            }
+        }
     }
 }
