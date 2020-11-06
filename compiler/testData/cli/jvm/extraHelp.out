@@ -109,6 +109,7 @@ where advanced options include:
                              Suppress the "cannot access built-in declaration" error (useful with -no-stdlib)
   -Xir-threads-for-file-lowerings
                              When using the IR backend, run lowerings by file in N parallel threads.
+                             0 means use a thread per processor core.
                              Default value is 1
   -Xuse-ir                   Use the IR backend
   -Xuse-javac                Use javac for Java source and class files analysis

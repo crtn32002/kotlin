@@ -233,7 +233,9 @@ fun CompilerConfiguration.configureAdvancedJvmOptions(arguments: K2JVMCompilerAr
 
     arguments.declarationsOutputPath?.let { put(JVMConfigurationKeys.DECLARATIONS_JSON_PATH, it) }
 
-    put(CommonConfigurationKeys.THREADS_FOR_FILE_LOWERINGS, arguments.threadsForFileLowerings.toIntOrNull() ?: 1)
+    val nThreadsRaw = arguments.threadsForFileLowerings.toIntOrNull() ?: 1
+    val nThreads = if (nThreadsRaw == 0) Runtime.getRuntime().availableProcessors() else nThreadsRaw
+    put(CommonConfigurationKeys.THREADS_FOR_FILE_LOWERINGS, nThreads)
 }
 
 fun CompilerConfiguration.configureKlibPaths(arguments: K2JVMCompilerArguments) {
