@@ -16,10 +16,8 @@ import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 import org.jetbrains.kotlin.gradle.dsl.multiplatformExtension
 import org.jetbrains.kotlin.gradle.plugin.KotlinSourceSet
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinMetadataCompilation
-import kotlin.test.BeforeTest
-import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertFalse
+import org.jetbrains.kotlin.gradle.plugin.mpp.buildKotlinProjectStructureMetadata
+import kotlin.test.*
 
 class JvmAndAndroidIntermediateSourceSetTest {
 
@@ -76,5 +74,13 @@ class JvmAndAndroidIntermediateSourceSetTest {
             compilation.compileKotlinTaskProvider.get().enabled,
             "Expected compilation task to be disabled, because not supported yet"
         )
+    }
+
+    @Test
+    fun `KotlinProjectStructureMetadata jvmAndAndroidMain exists in jvm variants`() {
+        project.evaluate()
+        val metadata = assertNotNull(buildKotlinProjectStructureMetadata(project))
+        assertTrue("jvmAndAndroidMain" in metadata.sourceSetNamesByVariantName["jvmApiElements"].orEmpty())
+        assertTrue("jvmAndAndroidMain" in metadata.sourceSetNamesByVariantName["jvmRuntimeElements"].orEmpty())
     }
 }
