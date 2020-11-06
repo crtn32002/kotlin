@@ -14,7 +14,6 @@ import org.jetbrains.kotlin.descriptors.VariableDescriptor
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.BindingContext
-import org.jetbrains.kotlin.resolve.ModuleStructureOracle
 import org.jetbrains.kotlin.resolve.calls.context.ResolutionContext
 import org.jetbrains.kotlin.resolve.descriptorUtil.builtIns
 import org.jetbrains.kotlin.resolve.scopes.receivers.ExpressionReceiver
@@ -26,10 +25,7 @@ import org.jetbrains.kotlin.types.expressions.ExpressionTypingUtils
 import org.jetbrains.kotlin.types.isError
 
 // Please, avoid using this implementation explicitly. If you need DataFlowValueFactory, use injection.
-class DataFlowValueFactoryImpl constructor(
-    private val languageVersionSettings: LanguageVersionSettings,
-    private val moduleStructureOracle: ModuleStructureOracle = ModuleStructureOracle.SingleModule,
-) : DataFlowValueFactory {
+class DataFlowValueFactoryImpl constructor(private val languageVersionSettings: LanguageVersionSettings) : DataFlowValueFactory {
     // Receivers
     override fun createDataFlowValue(
         receiverValue: ReceiverValue,
@@ -64,13 +60,7 @@ class DataFlowValueFactoryImpl constructor(
     ): DataFlowValue {
         val identifierInfo = IdentifierInfo.Variable(
             variableDescriptor,
-            variableDescriptor.variableKind(
-                usageContainingModule,
-                bindingContext,
-                property,
-                languageVersionSettings,
-                moduleStructureOracle,
-            ),
+            variableDescriptor.variableKind(usageContainingModule, bindingContext, property, languageVersionSettings),
             bindingContext[BindingContext.BOUND_INITIALIZER_VALUE, variableDescriptor]
         )
         return DataFlowValue(identifierInfo, variableDescriptor.type)
@@ -111,13 +101,7 @@ class DataFlowValueFactoryImpl constructor(
                 DataFlowValue(IdentifierInfo.Expression(expression, stableComplex = true), type)
 
             else -> {
-                val result = getIdForStableIdentifier(
-                    expression,
-                    bindingContext,
-                    containingDeclarationOrModule,
-                    languageVersionSettings,
-                    moduleStructureOracle,
-                )
+                val result = getIdForStableIdentifier(expression, bindingContext, containingDeclarationOrModule, languageVersionSettings)
                 DataFlowValue(if (result === IdentifierInfo.NO) IdentifierInfo.Expression(expression) else result, type)
             }
         }

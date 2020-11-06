@@ -15,20 +15,16 @@ import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.psiUtil.before
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.DescriptorUtils
-import org.jetbrains.kotlin.resolve.ModuleStructureOracle
 import org.jetbrains.kotlin.types.expressions.AssignedVariablesSearcher
 import org.jetbrains.kotlin.types.expressions.PreliminaryDeclarationVisitor
 
-internal fun PropertyDescriptor.propertyKind(
-    usageModule: ModuleDescriptor?,
-    moduleStructureOracle: ModuleStructureOracle,
-): DataFlowValue.Kind {
+internal fun PropertyDescriptor.propertyKind(usageModule: ModuleDescriptor?): DataFlowValue.Kind {
     if (isVar) return DataFlowValue.Kind.MUTABLE_PROPERTY
     if (isOverridable) return DataFlowValue.Kind.PROPERTY_WITH_GETTER
     if (!hasDefaultGetter()) return DataFlowValue.Kind.PROPERTY_WITH_GETTER
     if (!isInvisibleFromOtherModules()) {
         val declarationModule = DescriptorUtils.getContainingModule(this)
-        if (!areCompiledTogether(usageModule, declarationModule, moduleStructureOracle)) {
+        if (!areCompiledTogether(usageModule, declarationModule)) {
             return DataFlowValue.Kind.ALIEN_PUBLIC_PROPERTY
         }
     }
@@ -38,14 +34,11 @@ internal fun PropertyDescriptor.propertyKind(
 internal fun areCompiledTogether(
     usageModule: ModuleDescriptor?,
     declarationModule: ModuleDescriptor,
-    moduleStructureOracle: ModuleStructureOracle,
 ): Boolean {
     if (usageModule == null) return false
     if (usageModule == declarationModule) return true
 
-    return moduleStructureOracle.findAllDependsOnPaths(usageModule).any { dependsOnPath ->
-        declarationModule in dependsOnPath.nodes
-    }
+    return declarationModule in usageModule.allExpectedByModules
 }
 
 internal fun VariableDescriptor.variableKind(
@@ -53,10 +46,9 @@ internal fun VariableDescriptor.variableKind(
     bindingContext: BindingContext,
     accessElement: KtElement,
     languageVersionSettings: LanguageVersionSettings,
-    moduleStructureOracle: ModuleStructureOracle,
 ): DataFlowValue.Kind {
     if (this is PropertyDescriptor) {
-        return propertyKind(usageModule, moduleStructureOracle)
+        return propertyKind(usageModule)
     }
 
     if (this is LocalVariableDescriptor && this.isDelegated) {
