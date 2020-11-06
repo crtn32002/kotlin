@@ -164,32 +164,36 @@ class SymbolTable(
         }
 
         inline fun referenced(d: D, orElse: () -> S): S {
-            @Suppress("UNCHECKED_CAST")
-            val d0 = d.original as D
-            assert(d0 === d) {
-                "Non-original descriptor in declaration: $d\n\tExpected: $d0"
-            }
-            val s = get(d0)
-            if (s == null) {
-                val new = orElse()
-                assert(unboundSymbols.add(new)) {
-                    "Symbol for $new was already referenced"
+            synchronized(lock) {
+                @Suppress("UNCHECKED_CAST")
+                val d0 = d.original as D
+                assert(d0 === d) {
+                    "Non-original descriptor in declaration: $d\n\tExpected: $d0"
                 }
-                set(d0, new)
-                return new
+                val s = get(d0)
+                if (s == null) {
+                    val new = orElse()
+                    assert(unboundSymbols.add(new)) {
+                        "Symbol for $new was already referenced"
+                    }
+                    set(d0, new)
+                    return new
+                }
+                return s
             }
-            return s
         }
 
         @OptIn(ObsoleteDescriptorBasedAPI::class)
         inline fun referenced(sig: IdSignature, orElse: () -> S): S {
-            return get(sig) ?: run {
-                val new = orElse()
-                assert(unboundSymbols.add(new)) {
-                    "Symbol for ${new.signature} was already referenced"
+            synchronized(lock) {
+                return get(sig) ?: run {
+                    val new = orElse()
+                    assert(unboundSymbols.add(new)) {
+                        "Symbol for ${new.signature} was already referenced"
+                    }
+                    set(new.descriptor, new)
+                    new
                 }
-                set(new.descriptor, new)
-                new
             }
         }
     }
