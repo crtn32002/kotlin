@@ -153,6 +153,9 @@ private class FunctionClsStubBuilder(
             listOf(VISIBILITY, OPERATOR, INFIX, EXTERNAL_FUN, INLINE, TAILREC, SUSPEND) + modalityModifier
         )
 
+        // If function is marked as having no annotations, we don't create stubs for it
+        if (!Flags.HAS_ANNOTATIONS.get(functionProto.flags)) return
+
         val annotationIds = c.components.annotationLoader.loadCallableAnnotations(
             protoContainer, functionProto, AnnotatedCallableKind.FUNCTION
         )
@@ -207,6 +210,9 @@ private class PropertyClsStubBuilder(
             listOf(VISIBILITY, LATEINIT, EXTERNAL_PROPERTY) + constModifier + modalityModifier
         )
 
+        // If field is marked as having no annotations, we don't create stubs for it
+        if (!Flags.HAS_ANNOTATIONS.get(propertyProto.flags)) return
+
         val propertyAnnotations =
             c.components.annotationLoader.loadCallableAnnotations(protoContainer, propertyProto, AnnotatedCallableKind.PROPERTY)
         val backingFieldAnnotations =
@@ -259,6 +265,9 @@ private class ConstructorClsStubBuilder(
 
     override fun createModifierListStub() {
         val modifierListStubImpl = createModifierListStubForDeclaration(callableStub, constructorProto.flags, listOf(VISIBILITY))
+
+        // If constructor is marked as having no annotations, we don't create stubs for it
+        if (!Flags.HAS_ANNOTATIONS.get(constructorProto.flags)) return
 
         val annotationIds = c.components.annotationLoader.loadCallableAnnotations(
             protoContainer, constructorProto, AnnotatedCallableKind.FUNCTION
