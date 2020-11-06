@@ -647,6 +647,7 @@ class DeclarationsChecker(
                     return
                 }
             } else if (classDescriptor.kind == ClassKind.INTERFACE &&
+                !classDescriptor.isExpect &&
                 modifierList.hasModifier(KtTokens.OPEN_KEYWORD) &&
                 propertyDescriptor.modality == Modality.ABSTRACT) {
                 trace.report(REDUNDANT_OPEN_IN_INTERFACE.on(property))
@@ -772,7 +773,7 @@ class DeclarationsChecker(
                 if (function.hasModifier(KtTokens.PRIVATE_KEYWORD)) {
                     trace.report(PRIVATE_FUNCTION_WITH_NO_BODY.on(function, functionDescriptor))
                 }
-                if (!hasAbstractModifier && function.hasModifier(KtTokens.OPEN_KEYWORD)) {
+                if (!containingDescriptor.isExpect && !hasAbstractModifier && function.hasModifier(KtTokens.OPEN_KEYWORD)) {
                     trace.report(REDUNDANT_OPEN_IN_INTERFACE.on(function))
                 }
             }
