@@ -976,12 +976,7 @@ abstract class AbstractAndroidProjectHandler(private val kotlinConfigurationTool
         // Register the source only after the task is created, because the task is required for that:
         compilation.source(defaultSourceSet)
 
-        // TODO: maybe java source sets are created after this invocation.
-        processAndroidKotlinAndJavaSources(
-            compilation,
-            addKotlinSources = { kotlinSourceSet -> compilation.source(kotlinSourceSet) },
-            addJavaSources = { sources -> compilation.compileKotlinTaskProvider.configure { it.source(sources) } }
-        )
+        compilation.androidVariant.forEachKotlinSourceSet { kotlinSourceSet -> compilation.source(kotlinSourceSet) }
     }
 
     private fun postprocessVariant(
@@ -1000,27 +995,21 @@ abstract class AbstractAndroidProjectHandler(private val kotlinConfigurationTool
 
         val javaTask = variantData.getJavaTaskProvider()
         val kotlinTask = compilation.compileKotlinTaskProvider
+        compilation.androidVariant.forEachJavaSourceDir { sources -> kotlinTask.configure { it.source(sources) } }
         wireKotlinTasks(project, compilation, androidPlugin, androidExt, variantData, javaTask, kotlinTask)
     }
 }
 
-private fun getAllJavaSources(variantData: BaseVariant): Iterable<File> =
-    variantData.getSourceFolders(SourceKind.JAVA).map { it.dir }
-
-internal fun processAndroidKotlinAndJavaSources(
-    compilation: KotlinJvmAndroidCompilation,
-    addKotlinSources: (KotlinSourceSet) -> Unit,
-    addJavaSources: (Iterable<File>) -> Unit
-) {
-    val variantData = compilation.androidVariant
-
-    for (provider in variantData.sourceSets) {
-        val kotlinSourceSet = provider.getConvention(KOTLIN_DSL_NAME) as? KotlinSourceSet ?: continue
-        addKotlinSources(kotlinSourceSet)
-    }
-
-    addJavaSources(getAllJavaSources(variantData))
+internal inline fun BaseVariant.forEachKotlinSourceSet(action: (KotlinSourceSet) -> Unit) {
+    sourceSets
+        .mapNotNull { provider -> provider.getConvention(KOTLIN_DSL_NAME) as? KotlinSourceSet }
+        .forEach(action)
 }
+
+internal inline fun BaseVariant.forEachJavaSourceDir(action: (File) -> Unit) {
+    getSourceFolders(SourceKind.JAVA).map { it.dir }.forEach(action)
+}
+
 
 internal fun configureJavaTask(
     kotlinTaskProvider: TaskProvider<out KotlinCompile>,
