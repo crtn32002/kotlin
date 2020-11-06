@@ -80,8 +80,6 @@ internal class SourceSetVisibilityProvider(
             return SourceSetVisibilityResult(emptySet(), emptyMap())
         }
 
-        // TODO NOW missing debugApiElements & releaseApiElements in dependencyProjectStructureMetadata
-        //  This needs to be available, because only source sets that are available in all variants can be chosen!
         val visibleSourceSetNames = dependencyProjectStructureMetadata.sourceSetNamesByVariantName
             .filterKeys { it in visiblePlatformVariantNames }
             .values.let { if (it.isEmpty()) emptySet() else it.reduce { acc, item -> acc intersect item } }
