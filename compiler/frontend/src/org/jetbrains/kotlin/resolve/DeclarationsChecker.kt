@@ -757,6 +757,7 @@ class DeclarationsChecker(
 
         val containingDescriptor = functionDescriptor.containingDeclaration
         val hasAbstractModifier = function.hasModifier(KtTokens.ABSTRACT_KEYWORD)
+        val hasOpenModifier = function.hasModifier(KtTokens.OPEN_KEYWORD)
         val hasExternalModifier = functionDescriptor.isEffectivelyExternal()
 
         if (containingDescriptor is ClassDescriptor) {
@@ -775,6 +776,9 @@ class DeclarationsChecker(
                 }
                 if (!containingDescriptor.isExpect && !hasAbstractModifier && function.hasModifier(KtTokens.OPEN_KEYWORD)) {
                     trace.report(REDUNDANT_OPEN_IN_INTERFACE.on(function))
+                }
+                if (containingDescriptor.isExpect && hasAbstractModifier && hasOpenModifier) {
+                    trace.report(INCOMPATIBLE_OPEN_AND_ABSTRACT_MODIFIER_IN_EXPECT_INTERFACE.on(function))
                 }
             }
             if (!hasBody && !hasAbstractModifier && !hasExternalModifier && !inInterface && !isExpectClass &&

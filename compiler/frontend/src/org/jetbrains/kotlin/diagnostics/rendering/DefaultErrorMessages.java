@@ -173,6 +173,7 @@ public class DefaultErrorMessages {
 
         MAP.put(REDUNDANT_MODIFIER, "Modifier ''{0}'' is redundant because ''{1}'' is present", TO_STRING, TO_STRING);
         MAP.put(REDUNDANT_OPEN_IN_INTERFACE, "Modifier 'open' is redundant for abstract interface members");
+        MAP.put(INCOMPATIBLE_OPEN_AND_ABSTRACT_MODIFIER_IN_EXPECT_INTERFACE, "Expect interface members can only be open or abstract");
         MAP.put(REDUNDANT_MODIFIER_IN_GETTER, "Visibility modifiers are redundant in getter");
         MAP.put(TYPE_PARAMETERS_IN_ENUM, "Enum class cannot have type parameters");
         MAP.put(TYPECHECKER_HAS_RUN_INTO_RECURSIVE_PROBLEM,
